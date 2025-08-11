@@ -809,13 +809,13 @@
 
 		<!--- this equates to the last populated row in base-1. getNextEmptyRow() contains
 			special handling required work around eccentricities with getLastRowNum(). --->
-		<cfset Local.lastRow = getNextEmptyRow() />
+		<cfset local.lastRow = getNextEmptyRow() />
 
 		<!--- If the requested row already exists ... --->
-		<cfif StructKeyExists(arguments, "startRow") and arguments.startRow lte Local.lastRow>
+		<cfif StructKeyExists(arguments, "startRow") and arguments.startRow lte local.lastRow>
 			<!--- shift the existing rows down (by one row) --->
 			<cfif arguments.insert>
-				<cfset shiftRows( arguments.startRow, Local.lastRow, 1 ) />
+				<cfset shiftRows( arguments.startRow, local.lastRow, 1 ) />
 			<!--- otherwise, clear the entire row --->
 			<cfelse>
 				<cfset deleteRow( arguments.startRow ) />
@@ -1111,11 +1111,11 @@
 		<cfargument name="delimiter" type="string" default="," />
 
 		<!--- for now only csv format is supported. one row per line (duh) --->
-		<cfset Local.dataLines = arguments.data.split("\r\n|\n") />
-		<cfloop from="1" to="#ArrayLen(Local.dataLines)#" index="Local.row">
+		<cfset local.dataLines = arguments.data.split("\r\n|\n") />
+		<cfloop from="1" to="#ArrayLen(local.dataLines)#" index="local.row">
 			<cfset addRow( 
-				data = Local.dataLines[ Local.row ]
-				, startRow = Local.row
+				data = local.dataLines[ local.row ]
+				, startRow = local.row
 				, delimiter = arguments.delimiter
 			) />
 		</cfloop>
@@ -1126,9 +1126,9 @@
 		<cfargument name="rowNum" type="numeric" required="true" />
 
 		<!--- If this is a valid row, remove it --->
-		<cfset Local.rowToDelete = arguments.rowNum - 1 />
-		<cfif Local.rowToDelete gte getFirstRowNum() and Local.rowToDelete lte getLastRowNum() >
-			<cfset getActiveSheet().removeRow( getActiveSheet().getRow(JavaCast("int", Local.rowToDelete)) ) />
+		<cfset local.rowToDelete = arguments.rowNum - 1 />
+		<cfif local.rowToDelete gte getFirstRowNum() and local.rowToDelete lte getLastRowNum() >
+			<cfset getActiveSheet().removeRow( getActiveSheet().getRow(JavaCast("int", local.rowToDelete)) ) />
 		</cfif>
 
 	</cffunction>
@@ -1784,9 +1784,11 @@
 
 		<cfif StructKeyExists(arguments.comment, "fillcolor")>
 			<cfset javaColorRGB = getJavaColorRGB(arguments.comment.fillcolor) />
-			<cfset commentObj.setFillColor(JavaCast("int", javaColorRGB.red),
-											JavaCast("int", javaColorRGB.green),
-											JavaCast("int", javaColorRGB.blue)) />
+			<cfset commentObj.setFillColor(
+				JavaCast("int", javaColorRGB.red)
+				, JavaCast("int", javaColorRGB.green)
+				, JavaCast("int", javaColorRGB.blue)
+			) />
 		</cfif>
 
 		<!---- Horizontal alignment can be left, center, right, justify, or distributed.
@@ -1826,9 +1828,11 @@
 					from over a year ago; maybe it's just still broken. --->
 		<cfif StructKeyExists(arguments.comment, "linestylecolor")>
 			<cfset javaColorRGB = getJavaColorRGB(arguments.comment.fillcolor) />
-			<cfset commentObj.setLineStyleColor(JavaCast("int", javaColorRGB.red),
-												JavaCast("int", javaColorRGB.green),
-												JavaCast("int", javaColorRGB.blue)) />
+			<cfset commentObj.setLineStyleColor(
+				JavaCast("int", javaColorRGB.red)
+				, JavaCast("int", javaColorRGB.green)
+				, JavaCast("int", javaColorRGB.blue)
+			)/>
 		</cfif>
 
 		<!--- Vertical alignment can be top, center, bottom, justify, and distributed.
