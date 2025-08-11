@@ -241,7 +241,14 @@
 			<!--- Add the data starting at the 2nd row, since the header
 				was added to the first row
 			---->
-			<cfset addRows( arguments.query, 2, 1, false, arguments.columnFormats, arguments.autoSizeColumns ) />
+			<cfset addRows( 
+				data = arguments.query
+				, row = 2
+				, column = 1
+				, insert = false
+				, formats = arguments.columnFormats
+				, autoSizeColumns = arguments.autoSizeColumns
+			)/>
 
 		<cfelseif structKeyExists(arguments, "name")>
 			<cfset addDelimitedRows( arguments.name ) />
@@ -276,7 +283,14 @@
 		<cfset setActiveSheet( sheetIndex=Local.sheetToActivate ) />
 
 		<cfif structKeyExists(arguments, "query")>
-			<cfset addRows( arguments.query, 1, 1, false, arguments.columnFormats, arguments.autoSizeColumns ) />
+			<cfset addRows( 
+				data = arguments.query
+				, row = 1
+				, column = 1
+				, insert = false
+				, formats = arguments.columnFormats
+				, autoSizeColumns = arguments.autoSizeColumns
+			) />
 		<cfelseif structKeyExists(arguments, "format")>
 			<cfset addDelimitedRows( arguments.name ) />
 		</cfif>
