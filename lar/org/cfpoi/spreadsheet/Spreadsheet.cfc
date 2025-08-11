@@ -792,6 +792,7 @@
 		<cfargument name="startRow" type="numeric" required="false" hint="Target row number" />
 		<cfargument name="startColumn" type="numeric" default="1" hint="Target column number" />
 		<cfargument name="insert" type="boolean" default="true" hint="If true, data is inserted as a new row. Otherwise, any existing data is overwritten "/>
+		<cfargument name="datatype" type="string" default="" hint="String,numeric or date. Defaults to string." />
 		<cfargument name="delimiter" type="string" default="," hint="Delimiter for the list of values" />
 		<cfargument name="handleEmbeddedCommas" type="boolean" default="true" hint="When true, values enclosed in single quotes are treated as a single element like in ACF. Only applies when the delimiter is a comma." />
 
@@ -958,6 +959,7 @@
 		<cfargument name="row" type="numeric" required="false" />
 		<cfargument name="column" type="numeric" default="1" />
 		<cfargument name="insert" type="boolean" default="true" />
+		<cfargument name="datatype" type="string" default="" hint="String representing column datatype rules. Currently not implemented" />
 		<cfargument name="formats" type="struct" default="#structNew()#" hint="Column format properties [key: columnName, value: format structure]" />
 		<cfargument name="autoSizeColumns" type="boolean" default="false" />
 
@@ -1047,10 +1049,8 @@
 
 				<cfelseif local.column.cellDataType EQ "BOOLEAN" AND IsBoolean(local.value)>
 					<cfset local.cell.setCellValue( JavaCast("boolean", local.value ) ) />
-
 				<cfelseif IsSimpleValue(local.value) AND NOT Len(local.value)>
 					<cfset local.cell.setCellType( local.cell.CELL_TYPE_BLANK ) />
-
 				<cfelse>
 					<cfset local.cell.setCellValue( JavaCast("string", local.value ) ) />
 				</cfif>
@@ -1965,12 +1965,12 @@
 		---->
 	</cffunction>
 
-	<cffunction name="setCellValue" access="public" output="false" returntype="void"
-			hint="Sets the value of a single cell">
+	<cffunction name="setCellValue" access="public" output="false" returntype="void" hint="Sets the value of a single cell">
 		<cfargument name="cellValue" type="string" required="true" />
 		<cfargument name="row" type="numeric" required="true" />
 		<cfargument name="column" type="numeric" required="true" />
-
+		<cfargument name="datatype" type="string" required="false" default="string" />
+		
 		<!--- Automatically create the cell if it does not exist, instead of throwing an error --->
 		<cfset Local.cell = initializeCell( row=arguments.row, column=arguments.column ) />
 
