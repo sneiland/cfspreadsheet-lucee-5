@@ -1028,7 +1028,8 @@
 
 				<!--- Cast the values to the correct type, so data formatting is properly applied --->
 				<cfif local.column.cellDataType EQ "DOUBLE" AND IsNumeric(local.value)>
-					<cfset Local.cell.setCellValue( JavaCast("double", val(Local.value) ) ) />
+					<cfset local.cell.setCellType( local.cell.CELL_TYPE_NUMERIC ) />
+					<cfset local.cell.setCellValue( JavaCast("double", val(local.value) ) ) />
 
 				<cfelseif local.column.cellDataType EQ "TIME" AND IsDate(local.value)>
 					<cfset local.value = timeFormat(parseDateTime(local.value), "HH:MM:SS") />
@@ -1972,10 +1973,79 @@
 		<cfargument name="datatype" type="string" required="false" default="string" />
 		
 		<!--- Automatically create the cell if it does not exist, instead of throwing an error --->
-		<cfset Local.cell = initializeCell( row=arguments.row, column=arguments.column ) />
+		<cfset local.cell = initializeCell( row=arguments.row, column=arguments.column ) />
+		
+		<cfset local.cellSet = false>
+		<cfset local.isDateColumn = false />
+		<cfset local.dateMask = "" />
 
-		<!--- TODO: need to worry about data types? doing everything as a string for now --->
-		<cfset Local.cell.setCellValue( JavaCast("string", arguments.cellValue) ) />
+		<cftry>
+			<cfif !len(trim(arguments.cellValue))>
+				<cfset local.cell.setCellType( local.cell.CELL_TYPE_BLANK) />
+				<cfset local.cell.setCellValue("") />
+				<cfset local.cellSet = true>
+			</cfif>
+
+			<cfif 
+				local.cellSet EQ false 
+				AND arguments.datatype EQ "date"
+				AND IsDate(local.cellValue)
+			>
+				<cfset local.cellFormat = getDateTimeValueFormat( local.cellValue ) />
+				<cfset local.cell.setCellStyle( buildCellStyle({dataFormat=local.cellFormat }) ) />
+				<cfset local.cell.setCellType( local.cell.CELL_TYPE_NUMERIC ) />
+				<cfset local.cell.setCellValue( JavaCast("date", arguments.cellValue) ) />
+
+				<!---				
+					<!--- Excel's uses a different epoch than CF (1900-01-01 versus 1899-12-30). "Time"
+						only values will not display properly without special handling ---->
+					<cfif local.cellFormat eq variables.defaultFormats.TIME>
+							<cfset local.cellValue = timeFormat(local.cellValue, "HH:MM:SS") />
+							<cfset local.cell.setCellValue( getPOIDateUtil().convertTime(local.cellValue) ) />
+					<cfelse>
+						<cfset local.cell.setCellValue( parseDateTime(local.cellValue) ) />
+					</cfif>
+				--->
+
+				<cfset local.dateMask = local.cellFormat />
+				<cfset local.isDateColumn = true />
+				<cfset local.cellSet = true>
+			</cfif>
+
+			<cfif 
+				local.cellSet EQ false 
+				AND arguments.datatype EQ "numeric"
+			>
+				<cfset local.cell.setCellType( local.cell.CELL_TYPE_NUMERIC ) />
+				<cfif isValid("integer",arguments.cellValue)>
+					<cfset local.cell.setCellValue( JavaCast("integer", arguments.cellValue) ) />
+				<cfelseif isValid("float",arguments.cellValue)>
+					<cfset local.cell.setCellValue( JavaCast("float", arguments.cellValue) ) />
+				<cfelse>
+					<cfset local.cell.setCellValue( JavaCast("string", arguments.cellValue) ) />
+				</cfif>
+				<cfset local.cellSet = true>
+			</cfif>
+
+			<!--- Finally handle string and any other failure condirions --->
+			<cfif not local.cellSet>
+				<cfset local.cell.setCellType( local.cell.CELL_TYPE_STRING ) />
+				<cfset local.cell.setCellValue( JavaCast("string", arguments.cellValue) ) />
+				<cfset local.cellSet = true>
+			</cfif>
+			
+			<cfcatch>
+				<!--- on error, default to string --->
+				<cfset local.cell.setCellType( local.cell.CELL_TYPE_STRING ) />
+				<cfset local.cell.setCellValue( JavaCast("string", arguments.cellValue) ) />
+			</cfcatch>
+		</cftry>
+
+		<!--- 
+			automatically resize column. It would be more efficient to invoke
+			resize after all processing is finished, but obviously that is not possible with addRow.
+		--->
+		<cfset autoSizeColumnFix( arguments.column, local.isDateColumn, local.dateMask ) />
 	</cffunction>
 
 	<cffunction name="setColumnWidth" access="public" output="false" returntype="void"
