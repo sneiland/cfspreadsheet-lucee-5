@@ -26,7 +26,6 @@
 						detail="Cannot specify both 'src' and 'useXmlFormat'. Argument 'useXmlFormat' only applies to new spreadsheets" />
 		</cfif>
 
-
 		<!--- Load an existing workbook from disk ---->
 		<cfif structKeyExists(arguments, "src")>
 			<cfset loadFromFile( argumentCollection=arguments ) />
@@ -946,7 +945,6 @@
 		</cfif>
 	</cffunction>
 
-
 	<cffunction name="addRows" access="public" output="false" returntype="void"
 			hint="Adds rows to a sheet from a query object">
 		<cfargument name="data" type="query" required="true" />
@@ -957,15 +955,17 @@
 		<cfargument name="autoSizeColumns" type="boolean" default="false" />
 
 		<cfif StructKeyExists(arguments, "row") and arguments.row lte 0>
-			<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
-						message="Invalid Row Value"
-						detail="The value for row must be greater than or equal to 1." />
+			<cfthrow 
+				type="org.cfpoi.spreadsheet.Spreadsheet"
+				message="Invalid Row Value"
+				detail="The value for row must be greater than or equal to 1." />
 		</cfif>
 
 		<cfif StructKeyExists(arguments, "column") and arguments.column lte 0>
-			<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
-						message="Invalid Column Value"
-						detail="The value for column must be greater than or equal to 1." />
+			<cfthrow 
+				type="org.cfpoi.spreadsheet.Spreadsheet"
+				message="Invalid Column Value"
+				detail="The value for column must be greater than or equal to 1." />
 		</cfif>
 
 		<!--- this equates to the last populated row in base-1. getNextEmptyRow() contains
@@ -974,7 +974,6 @@
 
 		<!--- If the requested row already exists ... --->
 		<cfif StructKeyExists(arguments, "row") and arguments.row lte Local.lastRow>
-
 			<!--- shift the existing rows down --->
 			<cfif arguments.insert>
 				<cfset shiftRows( arguments.row, Local.lastRow, arguments.data.recordCount ) />
@@ -983,7 +982,6 @@
 				<cfset deleteRow( arguments.row ) />
 			--->
 			</cfif>
-
 		</cfif>
 
 		<!--- convert to base 0 for compatibility with existing functions. --->
@@ -995,7 +993,7 @@
 		</cfif>
 
 		<!--- get the column names and formatting information --->
-		<cfset Local.queryColumns	= getQueryColumnFormats(arguments.data, arguments.formats) />
+		<cfset Local.queryColumns = getQueryColumnFormats(arguments.data, arguments.formats) />
 		<cfset Local.dateUtil		= loadPOI("org.apache.poi.ss.usermodel.DateUtil") />
 		<cfset Local.dateColumns	= {} />
 
@@ -1015,8 +1013,8 @@
 			--->
 			<!--- populate all columns in the row --->
 			<cfloop array="#Local.queryColumns#" index="Local.column">
-				<cfset Local.cell 	= createCell( Local.theRow, Local.cellNum, false ) />
-				<cfset Local.value 	= arguments.data[Local.column.name][arguments.data.currentRow] />
+				<cfset Local.cell = createCell( Local.theRow, Local.cellNum, false ) />
+				<cfset Local.value = arguments.data[Local.column.name][arguments.data.currentRow] />
 				<cfset Local.forceDefaultStyle = false />
 				<cfset Local.column.index = Local.cellNum />
 
@@ -2035,12 +2033,12 @@
 		</cfif>
 
 		<!--- convert positions to (0-base) --->
-		<cfset Local.jRow 	 = JavaCast("int", arguments.row - 1) />
+		<cfset Local.jRow = JavaCast("int", arguments.row - 1) />
 		<cfset Local.jColumn = JavaCast("int", arguments.column - 1) />
 
 		<!--- get the desired row/cell. initialize them if they do not already exist ... --->
-		<cfset Local.rowObj		= getCellUtil().getRow( Local.jRow, getActiveSheet() ) />
-		<cfset Local.cellObj	= getCellUtil().getCell( Local.rowObj, Local.jColumn ) />
+		<cfset Local.rowObj = getCellUtil().getRow( Local.jRow, getActiveSheet() ) />
+		<cfset Local.cellObj = getCellUtil().getCell( Local.rowObj, Local.jColumn ) />
 
 		<cfreturn Local.cellObj />
 	</cffunction>
