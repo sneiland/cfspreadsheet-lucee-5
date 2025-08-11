@@ -71,9 +71,9 @@
 		<cfargument name="excludeHeaderRow" type="boolean" default="false" />
 		<cfargument name="readAllSheets" type="boolean" default="false" />
 
-		<cfset Local.returnVal 	= 0 />
-		<cfset Local.exportUtil = 0 />
-		<cfset Local.outFile 	= "" />
+		<cfset local.returnVal 	= 0 />
+		<cfset local.exportUtil = 0 />
+		<cfset local.outFile 	= "" />
 
 		<cfif not structKeyExists(arguments, "query") and not structKeyExists(arguments, "format")>
 				<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
@@ -97,20 +97,20 @@
 
 			<cfcase value="csv,tab,pipe">
 				<!--- For CSV/HTML format, output results to a temp file --->
-				<cfset Local.outFile = GetTempFile( ExpandPath("."), "cfpoi") />
-				<cfset Local.exportUtil = loadPOI("org.cfsearching.poi.WorkbookExportFactory").createCSVExport( arguments.src, Local.outFile )/>
-				<cfset Local.exportUtil.setSeparator( Local.exportUtil[ UCASE(arguments.format) ] ) />
+				<cfset local.outFile = GetTempFile( ExpandPath("."), "cfpoi") />
+				<cfset local.exportUtil = loadPOI("org.cfsearching.poi.WorkbookExportFactory").createCSVExport( arguments.src, local.outFile )/>
+				<cfset local.exportUtil.setSeparator( local.exportUtil[ UCASE(arguments.format) ] ) />
 			</cfcase>
 
 			<cfcase value="html">
 				<!--- For CSV/HTML format, output results to a temp file --->
-				<cfset Local.outFile = GetTempFile( ExpandPath("."), "cfpoi") />
-				<cfset Local.exportUtil = loadPOI("org.cfsearching.poi.WorkbookExportFactory").createSimpleHTMLExport( arguments.src, Local.outFile )/>
+				<cfset local.outFile = GetTempFile( ExpandPath("."), "cfpoi") />
+				<cfset local.exportUtil = loadPOI("org.cfsearching.poi.WorkbookExportFactory").createSimpleHTMLExport( arguments.src, local.outFile )/>
 			</cfcase>
 
 			<cfcase value="query">
-				<cfset Local.exportUtil = loadPOI("org.cfsearching.poi.WorkbookExportFactory").createQueryExport( arguments.src, arguments.query )/>
-				<cfset Local.exportUtil.setColumnNames( javacast("string", arguments.columnNames) ) />
+				<cfset local.exportUtil = loadPOI("org.cfsearching.poi.WorkbookExportFactory").createQueryExport( arguments.src, arguments.query )/>
+				<cfset local.exportUtil.setColumnNames( javacast("string", arguments.columnNames) ) />
 			</cfcase>
 
 		</cfswitch>
@@ -118,55 +118,55 @@
 		<!--- read a specific sheet --->
 		<cfif not arguments.readAllSheets>
 			<cfif structKeyExists(arguments, "sheetname")>
-				<cfset Local.exportUtil.setSheetToRead( javacast("string", arguments.sheetname) ) />
+				<cfset local.exportUtil.setSheetToRead( javacast("string", arguments.sheetname) ) />
 
 			<cfelseif structKeyExists(arguments, "sheet")>
-				<cfset Local.exportUtil.setSheetToRead( javacast("int", arguments.sheet - 1 ) ) />
+				<cfset local.exportUtil.setSheetToRead( javacast("int", arguments.sheet - 1 ) ) />
 
 			<cfelse>
 				<!--- default to the first sheet, like ACF --->
-				<cfset Local.exportUtil.setSheetToRead( javacast("int", 0 ) ) />
+				<cfset local.exportUtil.setSheetToRead( javacast("int", 0 ) ) />
 			</cfif>
 		</cfif>
 
 		<!--- read a specific range of rows --->
 		<cfif structKeyExists(arguments, "rows")>
-			<cfset Local.exportUtil.setRowsToProcess( javacast("string", arguments.rows) ) />
+			<cfset local.exportUtil.setRowsToProcess( javacast("string", arguments.rows) ) />
 		</cfif>
 
 		<!--- read a specific range of columns --->
 		<cfif structKeyExists(arguments, "columns")>
-			<cfset Local.exportUtil.setColumnsToProcess( javacast("string", arguments.columns) ) />
+			<cfset local.exportUtil.setColumnsToProcess( javacast("string", arguments.columns) ) />
 		</cfif>
 
 		<!--- identify header row --->
 		<cfif structKeyExists(arguments, "headerRow")>
-			<cfset Local.exportUtil.setHeaderRow( javacast("int", arguments.headerRow - 1) ) />
+			<cfset local.exportUtil.setHeaderRow( javacast("int", arguments.headerRow - 1) ) />
 		</cfif>
 
 		<!--- for ACF compatibility --->
 		<cfif structKeyExists(arguments, "excludeHeaderRow")>
-			<cfset Local.exportUtil.setExcludeHeaderRow( javacast("boolean", arguments.excludeHeaderRow) ) />
+			<cfset local.exportUtil.setExcludeHeaderRow( javacast("boolean", arguments.excludeHeaderRow) ) />
 		</cfif>
 
 		<cftry>
-			<cfset Local.exportUtil.process() />
+			<cfset local.exportUtil.process() />
 
 			<cfif arguments.format eq "query">
-				<cfset Local.returnVal = Local.exportUtil.getQuery() />
+				<cfset local.returnVal = local.exportUtil.getQuery() />
 			<cfelse>
-				<cfset Local.returnVal = FileRead( Local.outFile, "utf-8" ) />
+				<cfset local.returnVal = FileRead( local.outFile, "utf-8" ) />
 			</cfif>
 
 			<cffinally>
 				<!--- remove temp file --->
-				<cfif FileExists( Local.outFile )>
-					<cfset FileDelete( Local.outFile ) />
+				<cfif FileExists( local.outFile )>
+					<cfset FileDelete( local.outFile ) />
 				</cfif>
 			</cffinally>
 		</cftry>
 
-		<cfreturn Local.returnVal />
+		<cfreturn local.returnVal />
 
 	</cffunction>
 
@@ -208,13 +208,13 @@
 		</cfif>
 
 
-		<cfset Local.newSheet			= 0 />
-		<cfset Local.isAppend			= true />
-		<cfset Local.sheetCount			= getWorkbook().getNumberOfSheets() />
+		<cfset local.newSheet			= 0 />
+		<cfset local.isAppend			= true />
+		<cfset local.sheetCount			= getWorkbook().getNumberOfSheets() />
 
 		<!--- If neither name or format is supplied, we're just writing the workbook to disk --->
 		<cfif not (structKeyExists(arguments, "query") or structKeyExists(arguments, "name"))>
-			<cfset Local.isAppend = false />
+			<cfset local.isAppend = false />
 		</cfif>
 
 		<!--- If we are appending data, make sure we have a blank sheet to populate.
@@ -222,9 +222,9 @@
 				a) active sheet already contains data OR
 				b) current workbook is empty (should not happen, but just in case ...)
 			--->
-		<cfif Local.isAppend and (Local.sheetCount eq 0 or getNextEmptyRow() gt 0)>
-			<cfset Local.newSheet = createSheet() />
-			<cfset setActiveSheet( sheetName=Local.newSheet.getSheetName() ) />
+		<cfif local.isAppend and (local.sheetCount eq 0 or getNextEmptyRow() gt 0)>
+			<cfset local.newSheet = createSheet() />
+			<cfset setActiveSheet( sheetName=local.newSheet.getSheetName() ) />
 		</cfif>
 
 		<!--- If requested, rename the active sheet --->
@@ -290,13 +290,13 @@
 		<cfargument name="autoSizeColumns" type="boolean" default="false" />
 
 		<!--- remember the currently active sheet --->
-		<cfset Local.activeSheetNum = getWorkBook().getActiveSheetIndex() + 1 />
+		<cfset local.activeSheetNum = getWorkBook().getActiveSheetIndex() + 1 />
 
 		<!--- Create a new sheet to populate with data. Make it the active sheet so
 			we can reuse existing functions	--->
-		<cfset Local.sheetToUpdate = createSheet( argumentCollection=arguments ) />
-		<cfset Local.sheetToActivate = getWorkbook().getSheetIndex( Local.sheetToUpdate ) + 1 />
-		<cfset setActiveSheet( sheetIndex=Local.sheetToActivate ) />
+		<cfset local.sheetToUpdate = createSheet( argumentCollection=arguments ) />
+		<cfset local.sheetToActivate = getWorkbook().getSheetIndex( local.sheetToUpdate ) + 1 />
+		<cfset setActiveSheet( sheetIndex=local.sheetToActivate ) />
 
 		<cfif structKeyExists(arguments, "query")>
 			<cfset addRows( 
@@ -312,7 +312,7 @@
 		</cfif>
 
 		<!--- restore the original active sheet index as in ACF --->
-		<cfset setActiveSheet( sheetIndex=Local.activeSheetNum ) />
+		<cfset setActiveSheet( sheetIndex=local.activeSheetNum ) />
 
 		<!--- save the workbook to disk --->
 		<cfset writeToFile( argumentCollection=arguments ) />
@@ -517,30 +517,30 @@
 		--->
 		<!--- format specific metadata --->
 		<cfif isBinaryFormat()>
-			<cfset Local.info = getBinaryInfo() />
+			<cfset local.info = getBinaryInfo() />
 		<cfelse>
-			<cfset Local.info = getOOXMLInfo() />
+			<cfset local.info = getOOXMLInfo() />
 		</cfif>
 
 		<!--- common properties --->
-		<cfset Local.info.sheets = getWorkbook().getNumberOfSheets() />
-		<cfset Local.info.sheetnames = "" />
+		<cfset local.info.sheets = getWorkbook().getNumberOfSheets() />
+		<cfset local.info.sheetnames = "" />
 
-		<cfif IsNumeric(Local.info.sheets) and Local.info.sheets gt 0>
-			<cfloop index="Local.i" from="1" to="#Local.info.sheets#">
-				<cfset Local.info.sheetnames = ListAppend(Local.info.sheetnames, getWorkbook().getSheetName(JavaCast("int", Local.i - 1))) />
+		<cfif IsNumeric(local.info.sheets) and local.info.sheets gt 0>
+			<cfloop index="local.i" from="1" to="#local.info.sheets#">
+				<cfset local.info.sheetnames = ListAppend(local.info.sheetnames, getWorkbook().getSheetName(JavaCast("int", local.i - 1))) />
 			</cfloop>
 		</cfif>
 
 		<cfif getWorkbook().getClass().getName() eq "org.apache.poi.hssf.usermodel.HSSFWorkbook">
-			<cfset Local.info.spreadsheettype = "Excel" />
+			<cfset local.info.spreadsheettype = "Excel" />
 		<cfelseif getWorkbook().getClass().getName() eq "org.apache.poi.xssf.usermodel.XSSFWorkbook">
-			<cfset Local.info.spreadsheettype = "Excel (2007)" />
+			<cfset local.info.spreadsheettype = "Excel (2007)" />
 		<cfelse>
-			<cfset Local.info.spreadsheettype = "" />
+			<cfset local.info.spreadsheettype = "" />
 		</cfif>
 
-		<cfreturn Local.info />
+		<cfreturn local.info />
 	</cffunction>
 
 	<cffunction name="getOOXMLInfo" access="private" output="false" returntype="struct"
@@ -823,29 +823,29 @@
 		</cfif>
 
 		<cfif StructKeyExists(arguments, "startRow")>
-			<cfset Local.theRow = createRow( arguments.startRow - 1 ) />
+			<cfset local.theRow = createRow( arguments.startRow - 1 ) />
 		<cfelse>
-			<cfset Local.theRow	= createRow() />
+			<cfset local.theRow	= createRow() />
 		</cfif>
 
-		<cfset Local.rowValues = parseRowData( arguments.data, arguments.delimiter, arguments.handleEmbeddedCommas ) />
+		<cfset local.rowValues = parseRowData( arguments.data, arguments.delimiter, arguments.handleEmbeddedCommas ) />
 
 		<!--- TODO: Move to setCellValue --->
-		<cfset Local.cellNum = arguments.startColumn - 1 />
+		<cfset local.cellNum = arguments.startColumn - 1 />
 		
 		<cfset local.columnDatatypes = parseDataTypes( 
 			datatype=datatype, 
-			columnCount = arrayLen(Local.rowValues) + Local.cellNum
+			columnCount = arrayLen(local.rowValues) + local.cellNum
 		)>
 
-		<cfloop array="#Local.rowValues#" index="Local.cellValue">
+		<cfloop array="#local.rowValues#" index="local.cellValue">
 			<cfset setCellValue( 
-				Local.cellValue
-				, Local.theRow
-				, Local.cellNum
-				, local.columnDatatypes[Local.cellNum + 1]
+				local.cellValue
+				, local.theRow
+				, local.cellNum
+				, local.columnDatatypes[local.cellNum + 1]
 			)>
-			<cfset Local.cellNum = Local.cellNum + 1 />
+			<cfset local.cellNum = local.cellNum + 1 />
 		</cfloop>
 
 	</cffunction>
@@ -917,14 +917,14 @@
 				hint="Returns the default date mask for the given value: DATE (only), TIME (only) or TIMESTAMP ">
 		<cfargument name="value" type="any" required="true" />
 
-		<cfset Local.dateTime = parseDateTime(arguments.value) />
-		<cfset Local.dateOnly = createDate(year(Local.dateTime), month(Local.dateTime), day(Local.dateTime)) />
+		<cfset local.dateTime = parseDateTime(arguments.value) />
+		<cfset local.dateOnly = createDate(year(local.dateTime), month(local.dateTime), day(local.dateTime)) />
 
-		<cfif dateCompare(arguments.value, Local.dateOnly, "s") eq 0>
+		<cfif dateCompare(arguments.value, local.dateOnly, "s") eq 0>
 			<!--- DATE only --->
 			<cfreturn variables.defaultFormats.DATE />
 
-		<cfelseif dateCompare("1899-12-30", Local.dateOnly, "d") eq 0>
+		<cfelseif dateCompare("1899-12-30", local.dateOnly, "d") eq 0>
 			<!--- TIME only --->
 			<cfreturn variables.defaultFormats.TIME />
 		<cfelse>
@@ -945,8 +945,8 @@
 
 		<cfif arguments.isDateColumn>
 			<!--- Add a few zeros for extra padding --->
-			<cfset Local.newWidth = estimateColumnWidth( arguments.dateMask &"00000") />
-			<cfset getActiveSheet().setColumnWidth( arguments.columnIndex, Local.newWidth ) />
+			<cfset local.newWidth = estimateColumnWidth( arguments.dateMask &"00000") />
+			<cfset getActiveSheet().setColumnWidth( arguments.columnIndex, local.newWidth ) />
 		<cfelse>
 			<cfset getActiveSheet().autoSizeColumn( javacast("int", arguments.columnIndex), true ) />
 		</cfif>
@@ -977,13 +977,13 @@
 
 		<!--- this equates to the last populated row in base-1. getNextEmptyRow() contains
 			special handling required work around eccentricities with getLastRowNum(). --->
-		<cfset Local.lastRow = getNextEmptyRow() />
+		<cfset local.lastRow = getNextEmptyRow() />
 
 		<!--- If the requested row already exists ... --->
-		<cfif StructKeyExists(arguments, "row") and arguments.row lte Local.lastRow>
+		<cfif StructKeyExists(arguments, "row") and arguments.row lte local.lastRow>
 			<!--- shift the existing rows down --->
 			<cfif arguments.insert>
-				<cfset shiftRows( arguments.row, Local.lastRow, arguments.data.recordCount ) />
+				<cfset shiftRows( arguments.row, local.lastRow, arguments.data.recordCount ) />
 			<!--- do not clear the entire row because would erase all existing styles too
 			<cfelse>
 				<cfset deleteRow( arguments.row ) />
@@ -993,23 +993,23 @@
 
 		<!--- convert to base 0 for compatibility with existing functions. --->
 		<cfif StructKeyExists(arguments, "row")>
-			<cfset Local.rowNum = arguments.row - 1 />
+			<cfset local.rowNum = arguments.row - 1 />
 		<cfelse>
 			<!--- If a row number was not supplied, move to the next empty row --->
-			<cfset Local.rowNum	= getNextEmptyRow() />
+			<cfset local.rowNum	= getNextEmptyRow() />
 		</cfif>
 
 		<!--- get the column names and formatting information --->
-		<cfset Local.queryColumns = getQueryColumnFormats(arguments.data, arguments.formats) />
-		<cfset Local.dateColumns = {} />
+		<cfset local.queryColumns = getQueryColumnFormats(arguments.data, arguments.formats) />
+		<cfset local.dateColumns = {} />
 
 		<cfloop query="arguments.data">
 			<!--- can't just call addRow() here since that function expects a comma-delimited
 					list of data (probably not the greatest limitation ...) and the query
 					data may have commas in it, so this is a bit redundant with the addRow()
 					function --->
-			<cfset Local.theRow = createRow( Local.rowNum, false ) />
-			<cfset Local.cellNum = arguments.column - 1 />
+			<cfset local.theRow = createRow( local.rowNum, false ) />
+			<cfset local.cellNum = arguments.column - 1 />
 
 			<!---
 				Note: To properly apply date/number formatting:
@@ -1018,59 +1018,59 @@
 				- cell style must have a dataFormat (datetime values only)
 			--->
 			<!--- populate all columns in the row --->
-			<cfloop array="#Local.queryColumns#" index="Local.column">
-				<cfset Local.cell = createCell( Local.theRow, Local.cellNum, false ) />
-				<cfset Local.value = arguments.data[Local.column.name][arguments.data.currentRow] />
-				<cfset Local.forceDefaultStyle = false />
-				<cfset Local.column.index = Local.cellNum />
+			<cfloop array="#local.queryColumns#" index="local.column">
+				<cfset local.cell = createCell( local.theRow, local.cellNum, false ) />
+				<cfset local.value = arguments.data[local.column.name][arguments.data.currentRow] />
+				<cfset local.forceDefaultStyle = false />
+				<cfset local.column.index = local.cellNum />
 
 				<!--- Cast the values to the correct type, so data formatting is properly applied --->
-				<cfif Local.column.cellDataType EQ "DOUBLE" AND IsNumeric(Local.value)>
+				<cfif local.column.cellDataType EQ "DOUBLE" AND IsNumeric(local.value)>
 					<cfset Local.cell.setCellValue( JavaCast("double", val(Local.value) ) ) />
 
-				<cfelseif Local.column.cellDataType EQ "TIME" AND IsDate(Local.value)>
-					<cfset Local.value = timeFormat(parseDateTime(Local.value), "HH:MM:SS") />
-					<cfset Local.cell.setCellValue( getPOIDateUtil().convertTime(Local.value) ) />
-					<cfset Local.forceDefaultStyle = true />
-					<cfset Local.dateColumns[ Local.column.name ] = { index=Local.cellNum, type=Local.column.cellDataType } />
+				<cfelseif local.column.cellDataType EQ "TIME" AND IsDate(local.value)>
+					<cfset local.value = timeFormat(parseDateTime(local.value), "HH:MM:SS") />
+					<cfset local.cell.setCellValue( getPOIDateUtil().convertTime(local.value) ) />
+					<cfset local.forceDefaultStyle = true />
+					<cfset local.dateColumns[ local.column.name ] = { index=local.cellNum, type=local.column.cellDataType } />
 
-				<cfelseif Local.column.cellDataType EQ "DATE" AND IsDate(Local.value)>
+				<cfelseif local.column.cellDataType EQ "DATE" AND IsDate(local.value)>
 					<!--- If the cell is NOT already formatted for dates, apply the default format --->
 					<!--- brand new cells have a styleIndex == 0 --->
-					<cfset Local.styleIndex = Local.cell.getCellStyle().getDataFormat() />
-					<cfset Local.styleFormat = Local.cell.getCellStyle().getDataFormatString() />
-					<cfif Local.styleIndex EQ 0 OR NOT getPOIDateUtil().isADateFormat(Local.styleIndex, Local.styleFormat)>
-						<cfset Local.forceDefaultStyle = true />
+					<cfset local.styleIndex = local.cell.getCellStyle().getDataFormat() />
+					<cfset local.styleFormat = local.cell.getCellStyle().getDataFormatString() />
+					<cfif local.styleIndex EQ 0 OR NOT getPOIDateUtil().isADateFormat(local.styleIndex, local.styleFormat)>
+						<cfset local.forceDefaultStyle = true />
 					</cfif>
-					<cfset Local.cell.setCellValue( parseDateTime(Local.value) ) />
-					<cfset Local.dateColumns[ Local.column.name ] = { index=Local.cellNum, type=Local.column.cellDataType } />
+					<cfset local.cell.setCellValue( parseDateTime(local.value) ) />
+					<cfset local.dateColumns[ local.column.name ] = { index=local.cellNum, type=local.column.cellDataType } />
 
-				<cfelseif Local.column.cellDataType EQ "BOOLEAN" AND IsBoolean(Local.value)>
-					<cfset Local.cell.setCellValue( JavaCast("boolean", Local.value ) ) />
+				<cfelseif local.column.cellDataType EQ "BOOLEAN" AND IsBoolean(local.value)>
+					<cfset local.cell.setCellValue( JavaCast("boolean", local.value ) ) />
 
-				<cfelseif IsSimpleValue(Local.value) AND NOT Len(Local.value)>
-					<cfset Local.cell.setCellType( Local.cell.CELL_TYPE_BLANK ) />
+				<cfelseif IsSimpleValue(local.value) AND NOT Len(local.value)>
+					<cfset local.cell.setCellType( local.cell.CELL_TYPE_BLANK ) />
 
 				<cfelse>
-					<cfset Local.cell.setCellValue( JavaCast("string", Local.value ) ) />
+					<cfset local.cell.setCellValue( JavaCast("string", local.value ) ) />
 				</cfif>
 
 				<!--- Replace the existing styles with custom formatting --->
-				<cfif structKeyExists(Local.column, "customCellStyle")>
-					<cfset Local.cell.setCellStyle( Local.column.customCellStyle ) />
+				<cfif structKeyExists(local.column, "customCellStyle")>
+					<cfset local.cell.setCellStyle( local.column.customCellStyle ) />
 
 				<!--- Replace the existing styles with default formatting (for readability). The reason we cannot
 					just update the cell's style is because they are shared. So modifying it may impact more than
 					just this one cell.
 				--->
-				<cfelseif structKeyExists(Local.column, "defaultCellStyle") AND Local.forceDefaultStyle>
-					<cfset Local.cell.setCellStyle( Local.column.defaultCellStyle ) />
+				<cfelseif structKeyExists(local.column, "defaultCellStyle") AND local.forceDefaultStyle>
+					<cfset local.cell.setCellStyle( local.column.defaultCellStyle ) />
 				</cfif>
 
-				<cfset Local.cellNum = Local.cellNum + 1 />
+				<cfset local.cellNum = local.cellNum + 1 />
 			</cfloop>
 
-			<cfset Local.rowNum = Local.rowNum + 1 />
+			<cfset local.rowNum = local.rowNum + 1 />
 		</cfloop>
 
 		<!--- adjust column sizes to fit content. note: this method uses Java2D classes that throw
@@ -1078,26 +1078,26 @@
 			available, you must must run in headless mode ie java.awt.headless=true --->
 		<cfif arguments.autoSizeColumns and arguments.data.recordCount>
 			<!---
-			<cfset Local.startColumn = arguments.column - 1 />
-			<cfset Local.endColumn = Local.startColumn + arrayLen(Local.queryColumns) - 1 />
-			<cfloop from="#Local.startColumn#" to="#Local.endColumn#" index="Local.index">
-				<cfset getActiveSheet().autoSizeColumn( javacast("int", Local.index), true ) />
+			<cfset local.startColumn = arguments.column - 1 />
+			<cfset local.endColumn = local.startColumn + arrayLen(local.queryColumns) - 1 />
+			<cfloop from="#local.startColumn#" to="#local.endColumn#" index="local.index">
+				<cfset getActiveSheet().autoSizeColumn( javacast("int", local.index), true ) />
 			</cfloop>
 			--->
-			<cfloop array="#Local.queryColumns#" index="Local.column">
-				<cflog file="POI" text="#Local.column.name# #local.column.index#:: #Local.column.cellDataType#">
+			<cfloop array="#local.queryColumns#" index="local.column">
+				<cflog file="POI" text="#local.column.name# #local.column.index#:: #local.column.cellDataType#">
 				<!--- auto resize NON-date/time columns ---->
-				<cfif NOT listFindNoCase("DATE,TIME", Local.column.cellDataType)>
-					<cfset getActiveSheet().autoSizeColumn( javacast("int", Local.column.index), true ) />
+				<cfif NOT listFindNoCase("DATE,TIME", local.column.cellDataType)>
+					<cfset getActiveSheet().autoSizeColumn( javacast("int", local.column.index), true ) />
 				<cfelse>
 					<!--- Workaround: autoSizeColumn does not handle date columns correctly. As a
 						  result date columns are too narrow and cells display "######" ---->
-					<cfset Local.sampleValue = variables.defaultFormats[Local.column.cellDataType] />
-					<cfset Local.newWidth = estimateColumnWidth( Local.sampleValue &"0000") />
-					<cfset Local.oldWidth = getActiveSheet().getColumnWidth( Local.column.index) />
-					<cflog file="POI" text="Date/time #Local.column.name# #local.column.index#:: #Local.oldWidth# #local.newWidth#">
-					<cfif Local.oldWidth lt Local.newWidth>
-						<cfset Local.oldWidth = getActiveSheet().setColumnWidth( Local.column.index, Local.newWidth) />
+					<cfset local.sampleValue = variables.defaultFormats[local.column.cellDataType] />
+					<cfset local.newWidth = estimateColumnWidth( local.sampleValue &"0000") />
+					<cfset local.oldWidth = getActiveSheet().getColumnWidth( local.column.index) />
+					<cflog file="POI" text="Date/time #local.column.name# #local.column.index#:: #local.oldWidth# #local.newWidth#">
+					<cfif local.oldWidth lt local.newWidth>
+						<cfset local.oldWidth = getActiveSheet().setColumnWidth( local.column.index, local.newWidth) />
 					</cfif>
 				</cfif>
 			</cfloop>
@@ -1139,18 +1139,18 @@
 
 		<!--- Validate and extract the ranges. Range is a comma-delimited list of ranges,
 			and each value can be either a single number or a range of numbers with a hyphen. --->
-		<cfset Local.allRanges 	= extractRanges( arguments.range ) />
-		<cfset Local.theRange 	= 0 />
-		<cfset Local.i 			= 0 />
+		<cfset local.allRanges 	= extractRanges( arguments.range ) />
+		<cfset local.theRange 	= 0 />
+		<cfset local.i 			= 0 />
 
-		<cfloop array="#Local.allRanges#" index="Local.theRange">
+		<cfloop array="#local.allRanges#" index="local.theRange">
 			<!--- single row number --->
-			<cfif Local.theRange.startAt eq Local.theRange.endAt>
-				<cfset deleteRow( Local.theRange.startAt ) />
+			<cfif local.theRange.startAt eq local.theRange.endAt>
+				<cfset deleteRow( local.theRange.startAt ) />
 			<cfelse>
 				<!--- range of rows --->
-				<cfloop index="Local.i" from="#Local.theRange.startAt#" to="#Local.theRange.endAt#">
-					<cfset deleteRow( Local.i ) />
+				<cfloop index="local.i" from="#local.theRange.startAt#" to="#local.theRange.endAt#">
+					<cfset deleteRow( local.i ) />
 				</cfloop>
 			</cfif>
 		</cfloop>
@@ -1165,24 +1165,24 @@
 	<cffunction name="getLastRowNum" access="private" output="false" returntype="numeric"
 				Hint="Returns the last row number in the current sheet (base-0). Returns -1 if the sheet is empty">
 
-		<cfset Local.lastRow = getActiveSheet().getLastRowNum() />
+		<cfset local.lastRow = getActiveSheet().getLastRowNum() />
 		<!--- The sheet is empty. Return -1 instead of 0 --->
-		<cfif Local.lastRow eq 0 AND getActiveSheet().getPhysicalNumberOfRows() eq 0>
-			<cfset Local.lastRow = -1 />
+		<cfif local.lastRow eq 0 AND getActiveSheet().getPhysicalNumberOfRows() eq 0>
+			<cfset local.lastRow = -1 />
 		</cfif>
 
-		<cfreturn Local.lastRow />
+		<cfreturn local.lastRow />
 	</cffunction>
 
 	<cffunction name="getFirstRowNum" access="private" output="false" returntype="numeric"
 				Hint="Returns the index of the first row in the active sheet (0-based). Returns -1 if the sheet is empty">
-		<cfset Local.firstRow = getActiveSheet().getFirstRowNum() />
+		<cfset local.firstRow = getActiveSheet().getFirstRowNum() />
 		<!--- The sheet is empty. Return -1 instead of 0 --->
-		<cfif Local.firstRow eq 0 AND getActiveSheet().getPhysicalNumberOfRows() eq 0>
+		<cfif local.firstRow eq 0 AND getActiveSheet().getPhysicalNumberOfRows() eq 0>
 			<cfreturn -1 />
 		</cfif>
 
-		<cfreturn Local.firstRow />
+		<cfreturn local.firstRow />
 	</cffunction>
 
 	<cffunction name="getNextEmptyRow" access="private" output="false" returntype="numeric"
@@ -1214,12 +1214,12 @@
 		<cfargument name="format" type="struct" required="true" />
 		<cfargument name="rowNum" type="numeric" required="true" />
 
-		<cfset Local.theRow = getActiveSheet().getRow(arguments.rowNum - 1) />
+		<cfset local.theRow = getActiveSheet().getRow(arguments.rowNum - 1) />
 		<!--- there is nothing to do if the row does not exist ... --->
-		<cfif not IsNull( Local.theRow )>
-			<cfset Local.cellIterator = Local.theRow.cellIterator() />
-			<cfloop condition="#Local.cellIterator.hasNext()#">
-				<cfset formatCell(arguments.format, arguments.rowNum, Local.cellIterator.next().getColumnIndex() + 1) />
+		<cfif not IsNull( local.theRow )>
+			<cfset local.cellIterator = local.theRow.cellIterator() />
+			<cfloop condition="#local.cellIterator.hasNext()#">
+				<cfset formatCell(arguments.format, arguments.rowNum, local.cellIterator.next().getColumnIndex() + 1) />
 			</cfloop>
 		</cfif>
 
@@ -1232,18 +1232,18 @@
 
 		<!--- Validate and extract the ranges. Range is a comma-delimited list of ranges,
 			and each value can be either a single number or a range of numbers with a hyphen. --->
-		<cfset Local.allRanges 	= extractRanges( arguments.range ) />
-		<cfset Local.theRange 	= 0 />
-		<cfset Local.i 			= 0 />
+		<cfset local.allRanges 	= extractRanges( arguments.range ) />
+		<cfset local.theRange 	= 0 />
+		<cfset local.i 			= 0 />
 
-		<cfloop array="#Local.allRanges#" index="Local.theRange">
+		<cfloop array="#local.allRanges#" index="local.theRange">
 			<!--- single row number --->
-			<cfif Local.theRange.startAt eq Local.theRange.endAt>
-				<cfset formatRow( arguments.format, Local.theRange.startAt ) />
+			<cfif local.theRange.startAt eq local.theRange.endAt>
+				<cfset formatRow( arguments.format, local.theRange.startAt ) />
 			<cfelse>
 				<!--- range of rows --->
-				<cfloop index="Local.i" from="#Local.theRange.startAt#" to="#Local.theRange.endAt#">
-					<cfset formatRow( arguments.format, Local.i ) />
+				<cfloop index="local.i" from="#local.theRange.startAt#" to="#local.theRange.endAt#">
+					<cfset formatRow( arguments.format, local.i ) />
 				</cfloop>
 			</cfif>
 		</cfloop>
@@ -1284,14 +1284,14 @@
 		<cfargument name="delimiter" type="string" required="true" />
 
 		<!--- TODO: investigate possible VAR scope issue ? --->
-		<cfset Local.row 			= 0 />
-		<cfset Local.cell 			= 0 />
-		<cfset Local.oldCell 		= 0 />
-		<cfset Local.rowNum 		= 0 />
-		<cfset Local.cellNum 		= 0 />
-		<cfset Local.lastCellNum 	= 0 />
-		<cfset Local.i 				= 0 />
-		<cfset Local.cellValue 		= 0 />
+		<cfset local.row 			= 0 />
+		<cfset local.cell 			= 0 />
+		<cfset local.oldCell 		= 0 />
+		<cfset local.rowNum 		= 0 />
+		<cfset local.cellNum 		= 0 />
+		<cfset local.lastCellNum 	= 0 />
+		<cfset local.i 				= 0 />
+		<cfset local.cellValue 		= 0 />
 
 		<cfif StructKeyExists(arguments, "startRow") and arguments.startRow lte 0>
 			<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
@@ -1306,60 +1306,60 @@
 		</cfif>
 
 		<cfif StructKeyExists(arguments, "startRow")>
-			<cfset Local.rowNum = arguments.startRow - 1 />
+			<cfset local.rowNum = arguments.startRow - 1 />
 		</cfif>
 
 		<cfif StructKeyExists(arguments, "column")>
-			<cfset Local.cellNum = arguments.column - 1 />
+			<cfset local.cellNum = arguments.column - 1 />
 		<cfelse>
 
-			<cfset Local.row = getActiveSheet().getRow( Local.rowNum ) />
+			<cfset local.row = getActiveSheet().getRow( local.rowNum ) />
 			<!--- if this row exists, find the next empty cell number. note: getLastCellNum()
 				returns the cell index PLUS ONE or -1 if not found --->
-			<cfif not IsNull( Local.row ) and Local.row.getLastCellNum() gt 0>
-				<cfset Local.cellNum = Local.row.getLastCellNum() />
+			<cfif not IsNull( local.row ) and local.row.getLastCellNum() gt 0>
+				<cfset local.cellNum = local.row.getLastCellNum() />
 			<cfelse>
-				<cfset Local.cellNum = 0 />
+				<cfset local.cellNum = 0 />
 			</cfif>
 
 		</cfif>
 
-		<cfloop list="#arguments.data#" index="Local.cellValue" delimiters="#arguments.delimiter#">
+		<cfloop list="#arguments.data#" index="local.cellValue" delimiters="#arguments.delimiter#">
 		<!--- if rowNum is greater than the last row of the sheet, need to create a new row --->
-			<cfif Local.rowNum GT getActiveSheet().getLastRowNum() OR isNull(getActiveSheet().getRow( Local.rowNum ))>
-				<cfset Local.row = createRow(Local.rowNum) />
+			<cfif local.rowNum GT getActiveSheet().getLastRowNum() OR isNull(getActiveSheet().getRow( local.rowNum ))>
+				<cfset local.row = createRow(local.rowNum) />
 			<cfelse>
-				<cfset Local.row = getActiveSheet().getRow(Local.rowNum) />
+				<cfset local.row = getActiveSheet().getRow(local.rowNum) />
 			</cfif>
 
 			<!--- POI doesn't have any 'shift column' functionality akin to shiftRows()
 					so inserts get interesting ... --->
 			<!--- ** Note: row.getLastCellNum() returns the cell index PLUS ONE or -1 if not found --->
-			<cfif arguments.insert and Local.cellNum lt Local.row.getLastCellNum()>
+			<cfif arguments.insert and local.cellNum lt local.row.getLastCellNum()>
 				<!--- need to get the last populated column number in the row, figure out which
 						cells are impacted, and shift the impacted cells to the right to make
 						room for the new data --->
-				<cfset Local.lastCellNum = Local.row.getLastCellNum() />
+				<cfset local.lastCellNum = local.row.getLastCellNum() />
 
-				<cfloop index="Local.i" from="#Local.lastCellNum#" to="#Local.cellNum + 1#" step="-1">
-					<cfset Local.oldCell = Local.row.getCell(JavaCast("int", Local.i - 1)) />
+				<cfloop index="local.i" from="#local.lastCellNum#" to="#local.cellNum + 1#" step="-1">
+					<cfset local.oldCell = local.row.getCell(JavaCast("int", local.i - 1)) />
 
-					<cfif not IsNull( Local.oldCell )>
+					<cfif not IsNull( local.oldCell )>
 						<!--- TODO: Handle other cell types ? --->
-						<cfset Local.cell = createCell(Local.row, Local.i) />
-						<cfset Local.cell.setCellStyle( Local.oldCell.getCellStyle() ) />
-						<cfset Local.cell.setCellValue( Local.oldCell.getStringCellValue() ) />
-						<cfset Local.cell.setCellComment( Local.oldCell.getCellComment() ) />
+						<cfset local.cell = createCell(local.row, local.i) />
+						<cfset local.cell.setCellStyle( local.oldCell.getCellStyle() ) />
+						<cfset local.cell.setCellValue( local.oldCell.getStringCellValue() ) />
+						<cfset local.cell.setCellComment( local.oldCell.getCellComment() ) />
 					</cfif>
 
 				</cfloop>
 			</cfif>
 
-			<cfset cell = createCell(Local.row, Local.cellNum) />
+			<cfset cell = createCell(local.row, local.cellNum) />
 
-			<cfset cell.setCellValue(JavaCast("string", Local.cellValue)) />
+			<cfset cell.setCellValue(JavaCast("string", local.cellValue)) />
 
-			<cfset Local.rowNum = Local.rowNum + 1 />
+			<cfset local.rowNum = local.rowNum + 1 />
 		</cfloop>
 	</cffunction>
 
@@ -1395,18 +1395,18 @@
 
 		<!--- Validate and extract the ranges. Range is a comma-delimited list of ranges,
 			and each value can be either a single number or a range of numbers with a hyphen. --->
-		<cfset Local.allRanges 	= extractRanges( arguments.range ) />
-		<cfset Local.theRange 	= 0 />
-		<cfset Local.i 			= 0 />
+		<cfset local.allRanges 	= extractRanges( arguments.range ) />
+		<cfset local.theRange 	= 0 />
+		<cfset local.i 			= 0 />
 
-		<cfloop array="#Local.allRanges#" index="Local.theRange">
+		<cfloop array="#local.allRanges#" index="local.theRange">
 			<!--- single column number --->
-			<cfif Local.theRange.startAt eq Local.theRange.endAt>
-				<cfset deleteColumn( Local.theRange.startAt ) />
+			<cfif local.theRange.startAt eq local.theRange.endAt>
+				<cfset deleteColumn( local.theRange.startAt ) />
 			<cfelse>
 				<!--- range of columns --->
-				<cfloop index="Local.i" from="#Local.theRange.startAt#" to="#Local.theRange.endAt#">
-					<cfset deleteColumn( Local.i ) />
+				<cfloop index="local.i" from="#local.theRange.startAt#" to="#local.theRange.endAt#">
+					<cfset deleteColumn( local.i ) />
 				</cfloop>
 			</cfif>
 		</cfloop>
@@ -1500,14 +1500,14 @@
 		<cfargument name="cellStyle" type="any" required="false" Hint="Existing cellStyle to reusue" />
 
 		<!--- Automatically create the cell if it does not exist, instead of throwing an error --->
-		<cfset Local.cell = initializeCell( arguments.row, arguments.column ) />
+		<cfset local.cell = initializeCell( arguments.row, arguments.column ) />
 
 		<cfif structKeyExists(arguments, "cellStyle")>
 			<!--- reuse an existing style --->
-			<cfset Local.cell.setCellStyle( arguments.cellStyle ) />
+			<cfset local.cell.setCellStyle( arguments.cellStyle ) />
 		<cfelse>
 			<!--- create a new style --->
-			<cfset Local.cell.setCellStyle( buildCellStyle(arguments.format) ) />
+			<cfset local.cell.setCellStyle( buildCellStyle(arguments.format) ) />
 		</cfif>
  	</cffunction>
 
@@ -1518,12 +1518,12 @@
 		<cfargument name="endRow" type="numeric" required="true" />
 		<cfargument name="endColumn" type="numeric" required="true" />
 
-		<cfset Local.rowNum = 0 />
-		<cfset Local.colNum = 0 />
+		<cfset local.rowNum = 0 />
+		<cfset local.colNum = 0 />
 
-		<cfloop from="#arguments.startRow#" to="#arguments.endRow#" index="Local.rowNum">
-			<cfloop from="#arguments.startColumn#" to="#arguments.endColumn#" index="Local.colNum">
-				<cfset clearCell( Local.rowNum, Local.colNum ) />
+		<cfloop from="#arguments.startRow#" to="#arguments.endRow#" index="local.rowNum">
+			<cfloop from="#arguments.startColumn#" to="#arguments.endColumn#" index="local.colNum">
+				<cfset clearCell( local.rowNum, local.colNum ) />
 			</cfloop>
 		</cfloop>
 
@@ -1534,14 +1534,14 @@
 		<cfargument name="row" type="numeric" required="true" />
 		<cfargument name="column" type="numeric" required="true" />
 
-		<cfset Local.defaultStyle = getWorkBook().getCellStyleAt( javacast("short", 0) ) />
-		<cfset Local.rowObj	 = getWorkBook().getRow( javaCast("int", arguments.row - 1)) />
+		<cfset local.defaultStyle = getWorkBook().getCellStyleAt( javacast("short", 0) ) />
+		<cfset local.rowObj	 = getWorkBook().getRow( javaCast("int", arguments.row - 1)) />
 
-		<cfif not IsNull(Local.rowObj)>
-			<cfset Local.cell = Local.rowObj.getCell( javaCast("int", arguments.column - 1) ) />
-			<cfif not IsNull(Local.cell)>
-				<cfset Local.cell.setCellStyle( Local.defaultStyle ) />
-				<cfset Local.cell.setCellType( Local.cell.CELL_TYPE_BLANK ) />
+		<cfif not IsNull(local.rowObj)>
+			<cfset local.cell = local.rowObj.getCell( javaCast("int", arguments.column - 1) ) />
+			<cfif not IsNull(local.cell)>
+				<cfset local.cell.setCellStyle( local.defaultStyle ) />
+				<cfset local.cell.setCellType( local.cell.CELL_TYPE_BLANK ) />
 			</cfif>
 		</cfif>
 	</cffunction>
@@ -1554,13 +1554,13 @@
 		<cfargument name="endRow" type="numeric" required="true" />
 		<cfargument name="endColumn" type="numeric" required="true" />
 
-		<cfset Local.rowNum = 0 />
-		<cfset Local.colNum = 0 />
-		<cfset Local.style = buildCellStyle(arguments.format) />
+		<cfset local.rowNum = 0 />
+		<cfset local.colNum = 0 />
+		<cfset local.style = buildCellStyle(arguments.format) />
 
-		<cfloop from="#arguments.startRow#" to="#arguments.endRow#" index="Local.rowNum">
-			<cfloop from="#arguments.startColumn#" to="#arguments.endColumn#" index="Local.colNum">
-				<cfset formatCell( arguments.format, Local.rowNum, Local.colNum, Local.style) />
+		<cfloop from="#arguments.startRow#" to="#arguments.endRow#" index="local.rowNum">
+			<cfloop from="#arguments.startColumn#" to="#arguments.endColumn#" index="local.colNum">
+				<cfset formatCell( arguments.format, local.rowNum, local.colNum, local.style) />
 			</cfloop>
 		</cfloop>
 
@@ -1913,9 +1913,9 @@
 		<cfargument name="column" type="numeric" required="true" />
 
 		<!--- Automatically create the cell if it does not exist, instead of throwing an error --->
-		<cfset Local.cell = initializeCell( row=arguments.row, column=arguments.column ) />
+		<cfset local.cell = initializeCell( row=arguments.row, column=arguments.column ) />
 
-		<cfset Local.cell.setCellFormula( JavaCast("string", arguments.formula) ) />
+		<cfset local.cell.setCellFormula( JavaCast("string", arguments.formula) ) />
 	</cffunction>
 
 	<cffunction name="getCellValue" access="public" output="false" returntype="string"
@@ -1925,22 +1925,22 @@
 
 
 		<!--- If the row/cell does not exist just return an emtpy string --->
-		<cfset Local.result = "" />
+		<cfset local.result = "" />
 
 		<cfif cellExists( argumentCollection=arguments )>
-			<cfset Local.row	= getActiveSheet().getRow( javaCast("int", arguments.row - 1)) />
-			<cfset Local.cell	= Local.row.getCell( javaCast("int", arguments.column - 1) ) />
+			<cfset local.row	= getActiveSheet().getRow( javaCast("int", arguments.row - 1)) />
+			<cfset local.cell	= local.row.getCell( javaCast("int", arguments.column - 1) ) />
 
-			<cfif Local.cell.getCellType() eq Local.cell.CELL_TYPE_FORMULA>
+			<cfif local.cell.getCellType() eq local.cell.CELL_TYPE_FORMULA>
 				<!--- evaluate the formula --->
-				<cfset Local.result = getFormatter().formatCellValue(Local.Cell, getEvaluator()) />
+				<cfset local.result = getFormatter().formatCellValue(local.Cell, getEvaluator()) />
 			<cfelse>
 				<!--- otherwise, return the formatted value as a string --->
-				<cfset Local.result = getFormatter().formatCellValue(Local.Cell) />
+				<cfset local.result = getFormatter().formatCellValue(local.Cell) />
 			</cfif>
 		</cfif>
 
-		<cfreturn Local.result />
+		<cfreturn local.result />
 		<!---
 		<!--- TODO: need to worry about additional cell types? --->
 				CellFormat cf = CellFormat.getInstance(style.getDataFormatString());
@@ -1948,16 +1948,16 @@
 		<cfswitch expression="#getActiveSheet().getRow(JavaCast('int', arguments.row - 1)).getCell(JavaCast('int', arguments.column - 1)).getCellType()#">
 			<!--- numeric or formula --->
 			<cfcase value="0,2" delimiters=",">
-				<cfset Local.returnVal = getActiveSheet().getRow(JavaCast("int", arguments.row - 1)).getCell(JavaCast("int", arguments.column - 1)).getNumericCellValue() />
+				<cfset local.returnVal = getActiveSheet().getRow(JavaCast("int", arguments.row - 1)).getCell(JavaCast("int", arguments.column - 1)).getNumericCellValue() />
 			</cfcase>
 
 			<!--- string --->
 			<cfcase value="1">
-				<cfset Local.returnVal = getActiveSheet().getRow(JavaCast("int", arguments.row - 1)).getCell(JavaCast("int", arguments.column - 1)).getStringCellValue() />
+				<cfset local.returnVal = getActiveSheet().getRow(JavaCast("int", arguments.row - 1)).getCell(JavaCast("int", arguments.column - 1)).getStringCellValue() />
 			</cfcase>
 		</cfswitch>
 
-		<cfreturn Local.returnVal />
+		<cfreturn local.returnVal />
 		---->
 	</cffunction>
 
@@ -2039,14 +2039,14 @@
 		</cfif>
 
 		<!--- convert positions to (0-base) --->
-		<cfset Local.jRow = JavaCast("int", arguments.row - 1) />
-		<cfset Local.jColumn = JavaCast("int", arguments.column - 1) />
+		<cfset local.jRow = JavaCast("int", arguments.row - 1) />
+		<cfset local.jColumn = JavaCast("int", arguments.column - 1) />
 
 		<!--- get the desired row/cell. initialize them if they do not already exist ... --->
-		<cfset Local.rowObj = getCellUtil().getRow( Local.jRow, getActiveSheet() ) />
-		<cfset Local.cellObj = getCellUtil().getCell( Local.rowObj, Local.jColumn ) />
+		<cfset local.rowObj = getCellUtil().getRow( local.jRow, getActiveSheet() ) />
+		<cfset local.cellObj = getCellUtil().getCell( local.rowObj, local.jColumn ) />
 
-		<cfreturn Local.cellObj />
+		<cfreturn local.cellObj />
 	</cffunction>
 
 	<cffunction name="cellExists" access="private" output="false" returntype="boolean"
@@ -2054,8 +2054,8 @@
 		<cfargument name="row" type="numeric" required="true" Hint="Row index of cell to retrieve ( 1-based !)"/>
 		<cfargument name="column" type="numeric" required="true" Hint="Col index of cell to retrieve ( 1-based !)"/>
 
-		<cfset Local.checkRow = getActiveSheet().getRow( JavaCast("int", arguments.row - 1) ) />
-		<cfif IsNull( Local.checkRow ) or IsNull( Local.checkRow.getCell( JavaCast("int", arguments.column - 1) ) )>
+		<cfset local.checkRow = getActiveSheet().getRow( JavaCast("int", arguments.row - 1) ) />
+		<cfif IsNull( local.checkRow ) or IsNull( local.checkRow.getCell( JavaCast("int", arguments.column - 1) ) )>
 				<cfreturn false />
 		</cfif>
 
@@ -2083,18 +2083,18 @@
 		</cfif>
 
 		<!--- get existing row (if any) --->
-		<cfset Local.row = getActiveSheet().getRow(JavaCast("int", arguments.rowNum)) />
+		<cfset local.row = getActiveSheet().getRow(JavaCast("int", arguments.rowNum)) />
 
-		<cfif arguments.overwrite and not IsNull(Local.row)>
+		<cfif arguments.overwrite and not IsNull(local.row)>
 			<!--- forcibly remove existing row and all cells --->
-			<cfset getActiveSheet().removeRow( Local.row) />
+			<cfset getActiveSheet().removeRow( local.row) />
 		</cfif>
 
 		<cfif arguments.overwrite OR IsNull(getActiveSheet().getRow(JavaCast("int", arguments.rowNum)))>
-			<cfset Local.row = getActiveSheet().createRow(JavaCast("int", arguments.rowNum)) />
+			<cfset local.row = getActiveSheet().createRow(JavaCast("int", arguments.rowNum)) />
 		</cfif>
 
-		<cfreturn Local.row />
+		<cfreturn local.row />
 	</cffunction>
 
 	<!--- TODO: POI supports setting the cell type when the cell is created. Need to worry about this? --->
@@ -2109,19 +2109,19 @@
 		</cfif>
 
 		<!--- get existing cell (if any) --->
-		<cfset Local.cell = arguments.row.getCell(JavaCast("int", arguments.cellNum)) />
+		<cfset local.cell = arguments.row.getCell(JavaCast("int", arguments.cellNum)) />
 
-		<cfif arguments.overwrite AND NOT IsNull(Local.cell)>
+		<cfif arguments.overwrite AND NOT IsNull(local.cell)>
 			<!--- forcibly remove the existing cell --->
-			<cfset arguments.row.removeCell( Local.cell ) />
+			<cfset arguments.row.removeCell( local.cell ) />
 		</cfif>
 
-		<cfif arguments.overwrite OR IsNull( Local.cell )>
+		<cfif arguments.overwrite OR IsNull( local.cell )>
 			<!--- create a brand new cell --->
-			<cfset Local.cell = arguments.row.createCell(JavaCast("int", arguments.cellNum)) />
+			<cfset local.cell = arguments.row.createCell(JavaCast("int", arguments.cellNum)) />
 		</cfif>
 
-		<cfreturn Local.cell />
+		<cfreturn local.cell />
 	</cffunction>
 
 	<!--- GET/SET FUNCTIONS FOR INTERNAL USE AND USING THIS CFC WITHOUT THE CORRESPONDING CUSTOM TAG --->
@@ -2224,24 +2224,24 @@
 
 
 		<cfif structKeyExists(arguments, "sheetName")>
-			<cfset Local.newSheetName = arguments.sheetName />
+			<cfset local.newSheetName = arguments.sheetName />
 		<cfelse>
-			<cfset Local.newSheetName = generateUniqueSheetName() />
+			<cfset local.newSheetName = generateUniqueSheetName() />
 		</cfif>
 
 		<!--- If this sheet name is already in use ... --->
-		<cfset Local.sheetNum = getWorkBook().getSheetIndex( javacast("string", Local.newSheetName) ) + 1 />
+		<cfset local.sheetNum = getWorkBook().getSheetIndex( javacast("string", local.newSheetName) ) + 1 />
 		<!--- Workaround for POI bug that returns wrong index for "Sheet1" with empty workbooks --->
-		<cfif Local.sheetNum gt 0 and getWorkBook().getNumberOfSheets() eq 0>
-			<cfset Local.sheetNum = 0 />
+		<cfif local.sheetNum gt 0 and getWorkBook().getNumberOfSheets() eq 0>
+			<cfset local.sheetNum = 0 />
 		</cfif>
 
 		<!--- If this sheet name is already in use ... --->
-		<cfif Local.sheetNum gt 0>
+		<cfif local.sheetNum gt 0>
 
 			<!--- Replace the existing sheet --->
 			<cfif arguments.nameConflict eq "overwrite">
-				<cfset deleteSheetAt( Local.sheetNum ) />
+				<cfset deleteSheetAt( local.sheetNum ) />
 
 			<cfelse>
 				<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
@@ -2251,14 +2251,14 @@
 
 		</cfif>
 
-		<cfset Local.newSheet = getWorkBook().createSheet( javaCast("String", Local.newSheetName) ) />
+		<cfset local.newSheet = getWorkBook().createSheet( javaCast("String", local.newSheetName) ) />
 
 		<!--- if overwriting, restore the sheet to its previous position --->
-		<cfif Local.sheetNum gt 0 and arguments.nameConflict eq "overwrite">
-			<cfset moveSheet( Local.newSheetName, Local.sheetNum ) />
+		<cfif local.sheetNum gt 0 and arguments.nameConflict eq "overwrite">
+			<cfset moveSheet( local.newSheetName, local.sheetNum ) />
 		</cfif>
 
-		<cfreturn Local.newSheet />
+		<cfreturn local.newSheet />
 
 	</cffunction>
 
@@ -2268,16 +2268,16 @@
 	<cffunction name="generateUniqueSheetName" access="private" output="false" returntype="string"
 				hint="Generates a unique sheet name (Sheet1, Sheet2, etecetera).">
 
-		<cfset Local.startNum	= getWorkBook().getNumberOfSheets() + 1 />
-		<cfset Local.maxRetry	= Local.startNum + 250 />
+		<cfset local.startNum	= getWorkBook().getNumberOfSheets() + 1 />
+		<cfset local.maxRetry	= local.startNum + 250 />
 
 		<!--- Try and generate a unique sheet name using the convetion: Sheet1, Sheet2, SheetX ... --->
-		<cfloop from="#Local.startNum#" to="#Local.maxRetry#" index="Local.sheetNum">
+		<cfloop from="#local.startNum#" to="#local.maxRetry#" index="local.sheetNum">
 
-			<cfset Local.proposedName = "Sheet"& Local.sheetNum />
+			<cfset local.proposedName = "Sheet"& local.sheetNum />
 			<!--- we found an available sheet name --->
-			<cfif getWorkBook().getSheetIndex( Local.proposedName ) lt 0>
-				<cfreturn Local.proposedName />
+			<cfif getWorkBook().getSheetIndex( local.proposedName ) lt 0>
+				<cfreturn local.proposedName />
 			</cfif>
 
 		</cfloop>
@@ -2299,9 +2299,9 @@
 		<cfset validateSheetName( arguments.sheetName ) />
 		<cfset validateSheetIndex( arguments.sheet ) />
 
-		<cfset Local.moveToIndex = arguments.sheet - 1 />
+		<cfset local.moveToIndex = arguments.sheet - 1 />
 		<cfset getWorkBook().setSheetOrder( javaCast("String", arguments.sheetName),
-											javaCast("int", Local.moveToIndex) ) />
+											javaCast("int", local.moveToIndex) ) />
 	</cffunction>
 
 	<cffunction name="deleteSheet" access="public" output="false" returntype="void"
@@ -2309,19 +2309,19 @@
 		<cfargument name="sheetName" type="string" required="false" Hint="Name of the sheet to remove" />
 		<cfargument name="sheetIndex" type="numeric" required="false" Hint="Position of the sheet to remove" />
 
-		<cfset Local.removeSheetNum 	 = 0 />
+		<cfset local.removeSheetNum 	 = 0 />
 
 		<cfset validateSheetNameOrIndexWasProvided( argumentCollection=arguments ) />
 
 		<!--- Convert the sheet name into an index (1-based) --->
 		<cfif structKeyExists(arguments, "sheetName")>
 			<cfset validateSheetName( arguments.sheetName ) />
-			<cfset Local.removeSheetNum = getWorkBook().getSheetIndex( sheetName ) + 1 />
+			<cfset local.removeSheetNum = getWorkBook().getSheetIndex( sheetName ) + 1 />
 		</cfif>
 
 		<cfif structKeyExists(arguments, "sheetIndex")>
 			<cfset validateSheetIndex( arguments.sheetIndex ) />
-			<cfset Local.removeSheetNum = arguments.sheetIndex />
+			<cfset local.removeSheetNum = arguments.sheetIndex />
 		</cfif>
 
 		<!--- Do not allow all of the sheets to be deleted, or the component will not function properly --->
@@ -2334,7 +2334,7 @@
 		<!--- NOTE: If this sheet is currently active/selected POI automatically activates/selects
 			another sheet. Either the next sheet OR the last sheet in the workbook.
 			--->
-		<cfset deleteSheetAt( Local.removeSheetNum ) />
+		<cfset deleteSheetAt( local.removeSheetNum ) />
 
 	</cffunction>
 
@@ -2354,8 +2354,8 @@
 		<cfset validateSheetIndex( arguments.sheetIndex )>
 
 		<!--- sheet already has this name --->
-		<cfset Local.foundAt = getWorkBook().getSheetIndex( javacast("string", arguments.sheetName) ) + 1 />
-		<cfif Local.foundAt gt 0 and Local.foundAt neq arguments.sheetIndex>
+		<cfset local.foundAt = getWorkBook().getSheetIndex( javacast("string", arguments.sheetName) ) + 1 />
+		<cfif local.foundAt gt 0 and local.foundAt neq arguments.sheetIndex>
 			<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
 						message="Invalid Sheet Name [#arguments.SheetName#]"
 						detail="The workbook already contains a sheet named [#arguments.sheetName#]. Sheet names must be unique" />
@@ -2383,12 +2383,12 @@
 
 		<cfscript>
 			// load the workbook from disk
-			Local.input 	= createObject("java", "java.io.FileInputStream").init( arguments.src );
-			Local.buffered 	= createObject("java", "java.io.BufferedInputStream").init( Local.input );
-			Local.workbookFactory = loadPoi("org.apache.poi.ss.usermodel.WorkbookFactory");
-			Local.workbook 	= Local.workbookFactory.create( Local.buffered );
-			Local.input.close();
-			Local.buffered.close();
+			local.input 	= createObject("java", "java.io.FileInputStream").init( arguments.src );
+			local.buffered 	= createObject("java", "java.io.BufferedInputStream").init( local.input );
+			local.workbookFactory = loadPoi("org.apache.poi.ss.usermodel.WorkbookFactory");
+			local.workbook 	= local.workbookFactory.create( local.buffered );
+			local.input.close();
+			local.buffered.close();
 
 			// initalize this component
 			setWorkBook( workbook );
@@ -2433,16 +2433,16 @@
 				getWorkbook().writeProtectWorkbook(JavaCast("string", arguments.password), JavaCast("string", "user"));
 			}
 
-			Local.fos = CreateObject("java", "java.io.FileOutputStream").init( arguments.filepath );
+			local.fos = CreateObject("java", "java.io.FileOutputStream").init( arguments.filepath );
 
 			try {
-				getWorkbook().write( Local.fos );
-				Local.fos.flush();
+				getWorkbook().write( local.fos );
+				local.fos.flush();
 			}
 			finally {
 				// always close the stream. otherwise file may be left in a locked state
 				// if an unexpected error occurs
-				Local.fos.close();
+				local.fos.close();
 			}
 		</cfscript>
 	</cffunction>
@@ -2688,10 +2688,10 @@
 
 		<cftry>
 			<!--- Note: Names must be in upper case and must match EXACTLY. No extra spaces ! --->
-			<cfset Local.findColor = trim( ucase(arguments.colorName) ) />
-			<cfset Local.IndexedColors = loadPOI("org.apache.poi.ss.usermodel.IndexedColors") />
-			<cfset Local.color	= Local.IndexedColors.valueOf( javacast("string", Local.findColor) ) />
-			<cfreturn Local.color.getIndex() />
+			<cfset local.findColor = trim( ucase(arguments.colorName) ) />
+			<cfset local.IndexedColors = loadPOI("org.apache.poi.ss.usermodel.IndexedColors") />
+			<cfset local.color	= local.IndexedColors.valueOf( javacast("string", local.findColor) ) />
+			<cfreturn local.color.getIndex() />
 
 			<cfcatch type="java.lang.IllegalArgumentException">
 				<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
@@ -2705,21 +2705,21 @@
 			hint="Returns a struct containing RGB values from java.awt.Color for the color name passed in">
 		<cfargument name="colorName" type="string" required="true" />
 
-		<cfset Local.findColor 	= ucase( trim(arguments.colorName) ) />
-		<cfset Local.color		= CreateObject("java", "java.awt.Color") />
-		<cfset Local.colorRGB 	= StructNew() />
+		<cfset local.findColor 	= ucase( trim(arguments.colorName) ) />
+		<cfset local.color		= CreateObject("java", "java.awt.Color") />
+		<cfset local.colorRGB 	= StructNew() />
 
-		<cfif not structKeyExists(Local.color, findColor) or
-				not	isInstanceOf(Local.color[findColor], "java.awt.Color")>
+		<cfif not structKeyExists(local.color, findColor) or
+				not	isInstanceOf(local.color[findColor], "java.awt.Color")>
 			<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
 							message="Invalid Color"
 							detail="The color provided (#arguments.colorName#) is not valid." />
 		</cfif>
 
-		<cfset Local.color 			= Local.color[ findColor ] />
-		<cfset Local.colorRGB.red	= Local.color.getRed() />
-		<cfset Local.colorRGB.green	= Local.color.getGreen() />
-		<cfset Local.colorRGB.blue	= Local.color.getBlue() />
+		<cfset local.color 			= local.color[ findColor ] />
+		<cfset local.colorRGB.red	= local.color.getRed() />
+		<cfset local.colorRGB.green	= local.color.getGreen() />
+		<cfset local.colorRGB.blue	= local.color.getBlue() />
 
 		<cfreturn colorRGB />
 	</cffunction>
@@ -2759,53 +2759,53 @@
 		<cfargument name="formats" type="struct" default="#structNew()#">
 
 		<!--- extract the query columns and data types --->
-		<cfset Local.cell		= loadPOI("org.apache.poi.ss.usermodel.Cell") />
-		<cfset Local.formatter	= getWorkbook().getCreationHelper().createDataFormat() />
-		<cfset Local.metadata 	= getMetaData(arguments.query) />
+		<cfset local.cell		= loadPOI("org.apache.poi.ss.usermodel.Cell") />
+		<cfset local.formatter	= getWorkbook().getCreationHelper().createDataFormat() />
+		<cfset local.metadata 	= getMetaData(arguments.query) />
 
 		<!--- assign default formats based on the data type of each column --->
-		<cfloop array="#Local.metadata#" index="Local.col">
+		<cfloop array="#local.metadata#" index="local.col">
 
-			<cfswitch expression="#Local.col.typeName#">
+			<cfswitch expression="#local.col.typeName#">
 				<!--- apply basic formatting to dates and times for increased readability --->
 				<cfcase value="DATE,TIMESTAMP">
-					<cfset Local.col.cellDataType 		= "DATE" />
-					<cfset Local.col.defaultCellStyle 	= buildCellStyle( {dataFormat = variables.defaultFormats[ Local.col.typeName ]} ) />
+					<cfset local.col.cellDataType 		= "DATE" />
+					<cfset local.col.defaultCellStyle 	= buildCellStyle( {dataFormat = variables.defaultFormats[ local.col.typeName ]} ) />
 				</cfcase>
 				<cfcase value="TIME">
-					<cfset Local.col.cellDataType 		= "TIME" />
-					<cfset Local.col.defaultCellStyle 	= buildCellStyle( {dataFormat = variables.defaultFormats[ Local.col.typeName ]} ) />
+					<cfset local.col.cellDataType 		= "TIME" />
+					<cfset local.col.defaultCellStyle 	= buildCellStyle( {dataFormat = variables.defaultFormats[ local.col.typeName ]} ) />
 				</cfcase>
 				<!--- Note: Excel only supports "double" for numbers. Casting very large DECIMIAL/NUMERIC
 					or BIGINT values to double may result in a loss of precision or conversion to
 					NEGATIVE_INFINITY / POSITIVE_INFINITY. --->
 				<cfcase value="DECIMAL,BIGINT,NUMERIC,DOUBLE,FLOAT,INTEGER,REAL,SMALLINT,TINYINT">
-					<cfset Local.col.cellDataType = "DOUBLE" />
+					<cfset local.col.cellDataType = "DOUBLE" />
 				</cfcase>
 				<cfcase value="BOOLEAN,BIT">
-					<cfset Local.col.cellDataType = "BOOLEAN" />
+					<cfset local.col.cellDataType = "BOOLEAN" />
 				</cfcase>
 				<cfdefaultcase>
-					<cfset Local.col.cellDataType = "STRING" />
+					<cfset local.col.cellDataType = "STRING" />
 				</cfdefaultcase>
 			</cfswitch>
 
 			<!--- if custom formatting was supplied, load a new style object --->
-			<cfif structKeyExists(arguments.formats, Local.col.name)>
-				<cfset Local.formatProp = duplicate(arguments.formats[ Local.col.name ]) />
+			<cfif structKeyExists(arguments.formats, local.col.name)>
+				<cfset local.formatProp = duplicate(arguments.formats[ local.col.name ]) />
 
 				<!--- apply the default format (if none was provided) --->
-				<cfif not structKeyExists(Local.formatProp, "dataFormat") and structKeyExists(Local.col, cellFormat)>
-					<cfset Local.formatProp.dataFormat = variables.defaultFormats[ Local.col.typeName ] />
+				<cfif not structKeyExists(local.formatProp, "dataFormat") and structKeyExists(local.col, cellFormat)>
+					<cfset local.formatProp.dataFormat = variables.defaultFormats[ local.col.typeName ] />
 				</cfif>
 
 				<!--- generate the cell style --->
-				<cfset Local.col.customCellStyle = buildCellStyle(format=Local.formatProp) />
+				<cfset local.col.customCellStyle = buildCellStyle(format=local.formatProp) />
 			</cfif>
 
 		</cfloop>
 
-		<cfreturn Local.metadata />
+		<cfreturn local.metadata />
 	</cffunction>
 
 	<!--- COMMON VALIDATION FUNCTIONS --->
@@ -2815,10 +2815,10 @@
 		<cfargument name="sheetIndex" type="numeric" required="true" Hint="Sheet position (base-1)" />
 
 		<cfif not sheetExists( sheetIndex=arguments.sheetIndex )>
-			<cfset Local.sheetCount = getWorkBook().getNumberOfSheets() />
+			<cfset local.sheetCount = getWorkBook().getNumberOfSheets() />
 			<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
 						message="Invalid Sheet Index [#arguments.sheetIndex#]"
-						detail="The SheetIndex must a whole number between 1 and the total number of sheets in the workbook [#Local.sheetCount#]" />
+						detail="The SheetIndex must a whole number between 1 and the total number of sheets in the workbook [#local.sheetCount#]" />
 
 		</cfif>
 	</cffunction>
@@ -2860,33 +2860,33 @@
 				Hint="Parses and validates a list of row/column numbers. Returns an array of structures with the keys: startAt, endAt ">
 		<cfargument name="rangeList" type="string" required="true" />
 
-		<cfset Local.range 	 	= 0 />
-		<cfset Local.elem		= 0 />
-		<cfset Local.parts		= 0 />
-		<cfset Local.rangeTest 	= "^[0-9]{1,}(-[0-9]{1,})?$" />
-		<cfset Local.allRanges 	= [] />
+		<cfset local.range 	 	= 0 />
+		<cfset local.elem		= 0 />
+		<cfset local.parts		= 0 />
+		<cfset local.rangeTest 	= "^[0-9]{1,}(-[0-9]{1,})?$" />
+		<cfset local.allRanges 	= [] />
 
-		<cfloop list="#arguments.rangeList#" index="Local.elem">
+		<cfloop list="#arguments.rangeList#" index="local.elem">
 			<!--- remove all white space first --->
-			<cfset Local.elem = reReplace(Local.elem, "[[:space:]]+", "", "all") />
+			<cfset local.elem = reReplace(local.elem, "[[:space:]]+", "", "all") />
 
-			<cfif REFind(Local.rangeTest, Local.elem) gt 0>
-				<cfset Local.parts 	= listToArray(Local.elem, "-") />
+			<cfif REFind(local.rangeTest, local.elem) gt 0>
+				<cfset local.parts 	= listToArray(local.elem, "-") />
 
 				<!--- if this is a single number, the start/endAt values are the same --->
-				<cfset Local.range 	= {} />
-				<cfset Local.range.startAt	= Local.parts[ 1 ] />
-				<cfset Local.range.endAt	= Local.parts[ arrayLen(Local.parts) ] />
-				<cfset arrayAppend( Local.allRanges, Local.range ) />
+				<cfset local.range 	= {} />
+				<cfset local.range.startAt	= local.parts[ 1 ] />
+				<cfset local.range.endAt	= local.parts[ arrayLen(local.parts) ] />
+				<cfset arrayAppend( local.allRanges, local.range ) />
 
 			<cfelse>
 				<cfthrow type="org.cfpoi.spreadsheet.Spreadsheet"
 							message="Invalid Range Value"
-							detail="The range value #Local.elem# is not valid." />
+							detail="The range value #local.elem# is not valid." />
 			</cfif>
 		</cfloop>
 
-		<cfreturn Local.allRanges />
+		<cfreturn local.allRanges />
 	</cffunction>
 
 	<cffunction name="parseRowData" returntype="array" output="false"
@@ -2991,11 +2991,11 @@
 			of Excel's character unit. The maximum size in POI is: (255 * 256)
 		--->
 		<cfscript>
-			Local.defaultWidth = getDefaultCharWidth();
-			Local.numOfChars = len(arguments.value);
-			Local.width = ( Local.numOfChars * Local.defaultWidth +5) / Local.defaultWidth * 256;
+			local.defaultWidth = getDefaultCharWidth();
+			local.numOfChars = len(arguments.value);
+			local.width = ( local.numOfChars * local.defaultWidth +5) / local.defaultWidth * 256;
 			// Do not allow the size to exceed POI's maximum
-			return Min( Local.width, (255*256) );
+			return Min( local.width, (255*256) );
 		</cfscript>
 	</cffunction>
 
@@ -3004,19 +3004,19 @@
 		<cfscript>
 			// this is a compromise between hard coding a default value and the
 			// more complex method of using an AttributedString and TextLayout
-			Local.defaultFont = getWorkBook().getFontAt(0);
-			Local.style = getAWTFontStyle( Local.defaultFont );
-			Local.Font = createObject("java", "java.awt.Font");
-			Local.javaFont = Local.Font.init( Local.defaultFont.getFontName()
-													, Local.style
-													, Local.defaultFont.getFontHeightInPoints()
+			local.defaultFont = getWorkBook().getFontAt(0);
+			local.style = getAWTFontStyle( local.defaultFont );
+			local.Font = createObject("java", "java.awt.Font");
+			local.javaFont = local.Font.init( local.defaultFont.getFontName()
+													, local.style
+													, local.defaultFont.getFontHeightInPoints()
 												);
 
-			Local.transform = createObject("java", "java.awt.geom.AffineTransform");
-			Local.fontContext = createObject("java", "java.awt.font.FontRenderContext").init(Local.transform, true, true);
-			Local.bounds = Local.javaFont.getStringBounds("0", Local.fontContext);
+			local.transform = createObject("java", "java.awt.geom.AffineTransform");
+			local.fontContext = createObject("java", "java.awt.font.FontRenderContext").init(local.transform, true, true);
+			local.bounds = local.javaFont.getStringBounds("0", local.fontContext);
 
-			return Local.bounds.getWidth();
+			return local.bounds.getWidth();
 		</cfscript>
 	</cffunction>
 
@@ -3024,23 +3024,23 @@
 		hint="Transforms a POI Font ">
 		<cfargument name="poiFont" type="any" required="true" />
 		<cfscript>
-			Local.Font = createObject("java", "java.awt.Font");
-			Local.isBold = arguments.poiFont.getBoldweight() == arguments.poiFont.BOLDWEIGHT_BOLD;
+			local.Font = createObject("java", "java.awt.Font");
+			local.isBold = arguments.poiFont.getBoldweight() == arguments.poiFont.BOLDWEIGHT_BOLD;
 
-			if (Local.isBold && arguments.poiFont.getItalic()) {
-				Local.style = BitOr( Local.Font.BOLD, Local.Font.ITALIC);
+			if (local.isBold && arguments.poiFont.getItalic()) {
+				local.style = BitOr( local.Font.BOLD, local.Font.ITALIC);
 			}
-			else if (Local.isBold) {
-				Local.style = Local.Font.BOLD;
+			else if (local.isBold) {
+				local.style = local.Font.BOLD;
 			}
 			else if (arguments.poiFont.getItalic()) {
-				Local.style = Local.Font.ITALIC;
+				local.style = local.Font.ITALIC;
 			}
 			else {
-				Local.style = Local.Font.PLAIN;
+				local.style = local.Font.PLAIN;
 			}
 
-			return Local.style;
+			return local.style;
 		</cfscript>
 	</cffunction>
 
