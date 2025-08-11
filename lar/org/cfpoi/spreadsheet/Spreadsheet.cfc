@@ -233,9 +233,19 @@
 				otherwise use the columnlist from the query variable itself
 			--->
 			<cfif structKeyExists(arguments, "columnnames")>
-				<cfset addRow(arguments.columnnames, 1, 1, false) />
+				<cfset addRow(
+					data = arguments.columnnames
+					, startRow = 1
+					, startColumn = 1
+					, insert = false
+				) />
 			<cfelse>
-				<cfset addRow(arguments.query.columnlist, 1, 1, false) />
+				<cfset addRow(
+					data = arguments.query.columnlist
+					, startRow = 1
+					, startColumn = 1
+					, insert = false
+				) />
 			</cfif>
 
 			<!--- Add the data starting at the 2nd row, since the header
@@ -797,7 +807,6 @@
 
 		<!--- If the requested row already exists ... --->
 		<cfif StructKeyExists(arguments, "startRow") and arguments.startRow lte Local.lastRow>
-
 			<!--- shift the existing rows down (by one row) --->
 			<cfif arguments.insert>
 				<cfset shiftRows( arguments.startRow, Local.lastRow, 1 ) />
@@ -805,7 +814,6 @@
 			<cfelse>
 				<cfset deleteRow( arguments.startRow ) />
 			</cfif>
-
 		</cfif>
 
 		<cfif StructKeyExists(arguments, "startRow")>
@@ -814,74 +822,90 @@
 			<cfset Local.theRow	= createRow() />
 		</cfif>
 
-
 		<cfset Local.rowValues = parseRowData( arguments.data, arguments.delimiter, arguments.handleEmbeddedCommas ) />
 
 		<!--- TODO: Move to setCellValue --->
 		<cfset Local.cellNum = arguments.startColumn - 1 />
-		<cfset Local.dateUtil = loadPOI("org.apache.poi.ss.usermodel.DateUtil") />
+		
+		<cfset local.columnDatatypes = parseDataTypes( 
+			datatype=datatype, 
+			columnCount = arrayLen(Local.rowValues) + Local.cellNum
+		)>
 
 		<cfloop array="#Local.rowValues#" index="Local.cellValue">
-			<cfset Local.oldWidth = getActiveSheet().getColumnWidth( Local.cellNum ) />
-			<cfset Local.cell = createCell( Local.theRow, Local.cellNum ) />
-			<cfset Local.isDateColumn = false />
-			<cfset Local.dateMask = "" />
-<!---
-			<cftry>
-			--->
-				<!--- NUMERIC --->
-				<!--- skip numeric strings with leading zeroes. treat those as text --->
-				<cfif IsNumeric( Local.cellValue ) and NOT reFind("^0[\d]+", trim(Local.cellValue)) >
-					<cfset Local.cell.setCellType( Local.cell.CELL_TYPE_NUMERIC ) />
-					<cfset Local.cell.setCellValue( javacast("double", Local.cellValue ) ) />
-
-				<!--- DATE --->
-				<cfelseif IsDate( Local.cellValue)>
-					<cfset Local.cellFormat = getDateTimeValueFormat( Local.cellValue ) />
-					<cfset Local.cell.setCellStyle( buildCellStyle({dataFormat=Local.cellFormat }) ) />
-					<cfset Local.cell.setCellType( Local.cell.CELL_TYPE_NUMERIC ) />
-
-					<!--- Excel's uses a different epoch than CF (1900-01-01 versus 1899-12-30). "Time"
-						only values will not display properly without special handling ---->
-					<cfif Local.cellFormat eq variables.defaultFormats.TIME>
-						 <cfset Local.cellValue = timeFormat(Local.cellValue, "HH:MM:SS") />
-						 <cfset Local.cell.setCellValue( Local.dateUtil.convertTime(Local.cellValue) ) />
-					<cfelse>
-						<cfset Local.cell.setCellValue( parseDateTime(Local.cellValue) ) />
-					</cfif>
-
-					<cfset Local.dateMask = Local.cellFormat />
-					<cfset Local.isDateColumn = true />
-
-				<!--- STRING --->
-				<cfelseif len(trim(Local.cellValue))>
-					<cfset Local.cell.setCellType( Local.cell.CELL_TYPE_STRING ) />
-					<cfset Local.cell.setCellValue( JavaCast("string", Local.cellValue) ) />
-
-				<!--- EMPTY --->
-				<cfelse>
-					<cfset Local.cell.setCellType( Local.cell.CELL_TYPE_BLANK) />
-					<cfset Local.cell.setCellValue("") />
-				</cfif>
-<!---
-				<cfcatch>
-					<!--- on error, default to string --->
-					<cfset Local.cell.setCellType( Local.cell.CELL_TYPE_STRING ) />
-					<cfset Local.cell.setCellValue( JavaCast("string", Local.cellValue) ) />
-				</cfcatch>
-			</cftry>
---->
-
-			<!--- automatically resize column. It would be more efficient to invoke
-				resize after all processing is finished, but obviously that is not possible with addRow.
-			--->
-			<cfset autoSizeColumnFix( Local.cellNum, Local.isDateColumn, Local.dateMask ) />
-
+			<cfset setCellValue( 
+				Local.cellValue
+				, Local.theRow
+				, Local.cellNum
+				, local.columnDatatypes[Local.cellNum + 1]
+			)>
 			<cfset Local.cellNum = Local.cellNum + 1 />
 		</cfloop>
 
 	</cffunction>
 
+	<cffunction name="parseDataTypes" returntype="array" hint="Parses the acf datatypes rules for addrows into an array of datatypes matching the columns">
+		<cfargument name="datatype" type="string">
+		<cfargument name="columnCount" type="numeric">
+		
+		<cfset local.primaryDelimiter = ";">
+		<cfset local.secondaryDelimiter = ":">
+		<cfset local.defaultColumnType = "string">
+		
+		<!--- Split the datatype argument on the ';' delimiter --->
+		<cfset local.datatypesArr = listToArray(
+			arguments.datatype
+			,local.primaryDelimiter
+		)>
+		
+		<cfset local.rules = arrayNew(1)>
+		<cfloop array="#local.datatypesArr#" index="local.dtString">
+			<cfset local.dt = trim(
+				listFirst(
+					local.dtString
+					,local.secondaryDelimiter)
+			)>
+			
+			<cfif listLen(local.dtString,local.secondaryDelimiter) GT 1>
+				<cfset local.columnRules = trim(
+					listLast(
+						local.dtString
+						,local.secondaryDelimiter
+					)
+				)>
+				<cfset local.rule = structNew()>
+				<cfset local.rule.datatype = local.dt>
+				<cfset local.rule.rule = local.columnRules>
+				<cfset arrayAppend( local.rules, local.rule )>
+			<cfelse>
+				<cfset local.defaultColumnType = local.dtString>
+			</cfif>
+		</cfloop>
+		
+		<!--- Prepopulate the array using the default type --->
+		<cfset local.returnArray = arrayNew(1)>
+		<cfloop from="1" to="#arguments.columnCount#" index="local.i">
+			<cfset arrayAppend(local.returnArray,local.defaultColumnType)>
+		</cfloop>
+		
+		<cfloop array="#local.rules#" index="local.r">
+			<cfif findNoCase("-", local.r.rule)>
+				<cfset local.start = listFirst(local.r.rule,"-")>
+				<cfset local.end = listLast(local.r.rule,"-")>
+				<cfloop from="#local.start#" to="#local.end#" index="local.k">
+					<cfset local.returnArray[local.k] = lcase(local.r.datatype)>
+				</cfloop>
+			<cfelseif findNoCase(",", local.r.rule)>
+				<cfloop list="#local.r.rule#" index="local.j">
+					<cfset local.returnArray[local.j] = lcase(local.r.datatype)>
+				</cfloop>
+			<cfelseif isNumeric(local.r.rule)>
+				<cfset local.returnArray[local.r.rule] = lcase(local.r.datatype)>
+			</cfif>
+		</cfloop>
+		
+		<cfreturn local.returnArray>
+	</cffunction>
 
 	<cffunction name="getDateTimeValueFormat" access="private" returntype="string"
 				hint="Returns the default date mask for the given value: DATE (only), TIME (only) or TIMESTAMP ">
@@ -1085,7 +1109,11 @@
 		<!--- for now only csv format is supported. one row per line (duh) --->
 		<cfset Local.dataLines = arguments.data.split("\r\n|\n") />
 		<cfloop from="1" to="#ArrayLen(Local.dataLines)#" index="Local.row">
-			<cfset addRow( data=Local.dataLines[ Local.row ], startRow=Local.row, delimiter=arguments.delimiter ) />
+			<cfset addRow( 
+				data = Local.dataLines[ Local.row ]
+				, startRow = Local.row
+				, delimiter = arguments.delimiter
+			) />
 		</cfloop>
 	</cffunction>
 
