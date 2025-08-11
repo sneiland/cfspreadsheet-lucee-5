@@ -3,7 +3,7 @@
 	<cffunction name="testSetHeaderLeftOnly" access="public" returnType="void">
 		<cfset Local.sheet = SpreadsheetNew()>
 		<cfset Local.text = " this is left!" />
-		<cfset SpreadSheetSetCellValue(Local.sheet, "some text", 1, 1) />
+		<cfset SpreadSheetSetCellValue(Local.sheet, "some text", 1, 1, "string") />
 		<cfset SpreadSheetSetHeader(Local.sheet, Local.text, "", "") />
 		
 		<cfset Local.header = Local.sheet.getActiveSheet().getHeader() />
