@@ -47,6 +47,13 @@
 		<cfreturn this />
 	</cffunction>
 
+	<cffunction name="getPOIDateUtil">
+		<cfif !isDefined("variables.poiDateUtil")>
+			<cfset variables.poiDateUtil = loadPOI("org.apache.poi.ss.usermodel.DateUtil") />
+		</cfif>
+		<cfreturn variables.poiDateUtil>
+	</cffunction>
+
 	<!--- BASIC READ/WRITE/UPDATE FUNCTIONS --->
 
 	<!--- TODO: Add support for "destination" file --->
@@ -994,8 +1001,7 @@
 
 		<!--- get the column names and formatting information --->
 		<cfset Local.queryColumns = getQueryColumnFormats(arguments.data, arguments.formats) />
-		<cfset Local.dateUtil		= loadPOI("org.apache.poi.ss.usermodel.DateUtil") />
-		<cfset Local.dateColumns	= {} />
+		<cfset Local.dateColumns = {} />
 
 		<cfloop query="arguments.data">
 			<!--- can't just call addRow() here since that function expects a comma-delimited
@@ -1024,7 +1030,7 @@
 
 				<cfelseif Local.column.cellDataType EQ "TIME" AND IsDate(Local.value)>
 					<cfset Local.value = timeFormat(parseDateTime(Local.value), "HH:MM:SS") />
-					<cfset Local.cell.setCellValue( Local.dateUtil.convertTime(Local.value) ) />
+					<cfset Local.cell.setCellValue( getPOIDateUtil().convertTime(Local.value) ) />
 					<cfset Local.forceDefaultStyle = true />
 					<cfset Local.dateColumns[ Local.column.name ] = { index=Local.cellNum, type=Local.column.cellDataType } />
 
@@ -1033,7 +1039,7 @@
 					<!--- brand new cells have a styleIndex == 0 --->
 					<cfset Local.styleIndex = Local.cell.getCellStyle().getDataFormat() />
 					<cfset Local.styleFormat = Local.cell.getCellStyle().getDataFormatString() />
-					<cfif Local.styleIndex EQ 0 OR NOT Local.dateUtil.isADateFormat(Local.styleIndex, Local.styleFormat)>
+					<cfif Local.styleIndex EQ 0 OR NOT getPOIDateUtil().isADateFormat(Local.styleIndex, Local.styleFormat)>
 						<cfset Local.forceDefaultStyle = true />
 					</cfif>
 					<cfset Local.cell.setCellValue( parseDateTime(Local.value) ) />
