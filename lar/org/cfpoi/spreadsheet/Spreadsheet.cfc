@@ -823,28 +823,30 @@
 			</cfif>
 		</cfif>
 
+		<cfset local.rowNumber = local.lastRow + 1>
 		<cfif StructKeyExists(arguments, "startRow")>
+			<cfset local.rowNumber = arguments.startRow>
 			<cfset local.theRow = createRow( arguments.startRow - 1 ) />
 		<cfelse>
 			<cfset local.theRow	= createRow() />
 		</cfif>
 
 		<cfset local.rowValues = parseRowData( arguments.data, arguments.delimiter, arguments.handleEmbeddedCommas ) />
-
-		<cfset local.cellNum = arguments.startColumn - 1 />		
+	
 		<cfset local.columnDatatypes = parseDataTypes( 
-			datatype=datatype, 
+			datatype = datatype, 
 			columnCount = arrayLen(local.rowValues) + (arguments.startColumn - 1)
 		)><!--- Column count needs to account for the start column offset --->
 
+		<cfset local.columnNumber = arguments.startColumn - 1 />
 		<cfloop array="#local.rowValues#" index="local.cellValue">
+			<cfset local.columnNumber = local.columnNumber + 1 />
 			<cfset setCellValue( 
-				local.cellValue
-				, local.theRow
-				, local.cellNum
-				, local.columnDatatypes[local.cellNum + 1]
+				cellValue =local.cellValue
+				, row = local.rowNumber
+				, column = local.columnNumber
+				, datatype = local.columnDatatypes[local.columnNumber]
 			)>
-			<cfset local.cellNum = local.cellNum + 1 />
 		</cfloop>
 
 	</cffunction>
@@ -1968,7 +1970,7 @@
 		<cfargument name="cellValue" type="string" required="true" />
 		<cfargument name="row" type="numeric" required="true" />
 		<cfargument name="column" type="numeric" required="true" />
-		<cfargument name="datatype" type="string" required="false" default="string" />
+		<cfargument name="datatype" type="string" required="false" default="string" hint="string,date,numeric,time" />
 		
 		<!--- Automatically create the cell if it does not exist, instead of throwing an error --->
 		<cfset local.cell = initializeCell( row=arguments.row, column=arguments.column ) />
@@ -1986,25 +1988,34 @@
 
 			<cfif 
 				local.cellSet EQ false 
-				AND arguments.datatype EQ "date"
-				AND IsDate(local.cellValue)
+				AND listFindNoCase( "date,timestamp", arguments.datatype )
+				AND IsDate(arguments.cellValue)
 			>
-				<cfset local.cellFormat = getDateTimeValueFormat( local.cellValue ) />
+				<cfset local.cellFormat = getDateTimeValueFormat( arguments.cellValue ) />
 				<cfset local.cell.setCellStyle( buildCellStyle({dataFormat=local.cellFormat }) ) />
 				<cfset local.cell.setCellType( local.cell.CELL_TYPE_NUMERIC ) />
-				<cfset local.cell.setCellValue( JavaCast("date", arguments.cellValue) ) />
+				<cfset local.cell.setCellValue( parseDateTime(arguments.cellValue) ) />
 
-				<!---				
-					<!--- Excel's uses a different epoch than CF (1900-01-01 versus 1899-12-30). "Time"
-						only values will not display properly without special handling ---->
-					<cfif local.cellFormat eq variables.defaultFormats.TIME>
-							<cfset local.cellValue = timeFormat(local.cellValue, "HH:MM:SS") />
-							<cfset local.cell.setCellValue( getPOIDateUtil().convertTime(local.cellValue) ) />
-					<cfelse>
-						<cfset local.cell.setCellValue( parseDateTime(local.cellValue) ) />
-					</cfif>
-				--->
+				<cfset local.dateMask = local.cellFormat />
+				<cfset local.isDateColumn = true />
+				<cfset local.cellSet = true>
+			</cfif>
 
+			<cfif 
+				local.cellSet EQ false 
+				AND arguments.datatype EQ "time"
+				AND IsDate(arguments.cellValue)
+			>
+				<cfset local.cellFormat = getDateTimeValueFormat( arguments.cellValue ) />		
+				<cfset local.cell.setCellType( local.cell.CELL_TYPE_NUMERIC ) />		
+				<!--- Excel's uses a different epoch than CF (1900-01-01 versus 1899-12-30). "Time"
+					only values will not display properly without special handling ---->
+				<cfif local.cellFormat eq variables.defaultFormats.TIME>
+					<cfset local.cellValueFormatted = timeFormat(arguments.cellValue, "HH:MM:SS") />
+					<cfset local.cell.setCellValue( getPOIDateUtil().convertTime(local.cellValueFormatted) ) />
+				<cfelse>
+					<cfset local.cell.setCellValue( parseDateTime(arguments.cellValue) ) />
+				</cfif>
 				<cfset local.dateMask = local.cellFormat />
 				<cfset local.isDateColumn = true />
 				<cfset local.cellSet = true>
@@ -2014,12 +2025,14 @@
 				local.cellSet EQ false 
 				AND arguments.datatype EQ "numeric"
 			>
-				<cfset local.cell.setCellType( local.cell.CELL_TYPE_NUMERIC ) />
 				<cfif isValid("integer",arguments.cellValue)>
+					<cfset local.cell.setCellType( local.cell.CELL_TYPE_NUMERIC ) />
 					<cfset local.cell.setCellValue( JavaCast("integer", arguments.cellValue) ) />
 				<cfelseif isValid("float",arguments.cellValue)>
+					<cfset local.cell.setCellType( local.cell.CELL_TYPE_NUMERIC ) />
 					<cfset local.cell.setCellValue( JavaCast("float", arguments.cellValue) ) />
 				<cfelse>
+					<cfset local.cell.setCellType( local.cell.CELL_TYPE_STRING ) />
 					<cfset local.cell.setCellValue( JavaCast("string", arguments.cellValue) ) />
 				</cfif>
 				<cfset local.cellSet = true>
