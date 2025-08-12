@@ -831,13 +831,11 @@
 
 		<cfset local.rowValues = parseRowData( arguments.data, arguments.delimiter, arguments.handleEmbeddedCommas ) />
 
-		<!--- TODO: Move to setCellValue --->
-		<cfset local.cellNum = arguments.startColumn - 1 />
-		
+		<cfset local.cellNum = arguments.startColumn - 1 />		
 		<cfset local.columnDatatypes = parseDataTypes( 
 			datatype=datatype, 
-			columnCount = arrayLen(local.rowValues) + local.cellNum
-		)>
+			columnCount = arrayLen(local.rowValues) + (arguments.startColumn - 1)
+		)><!--- Column count needs to account for the start column offset --->
 
 		<cfloop array="#local.rowValues#" index="local.cellValue">
 			<cfset setCellValue( 
