@@ -4,6 +4,7 @@
 	<cfargument name="row" type="numeric" required="false" />
 	<cfargument name="column" type="numeric" required="false" />
 	<cfargument name="insert" type="boolean" default="true" />
+	<cfargument name="datatype" type="string" required="false" default=""/>
 	<cfargument name="formats" type="struct" required="false" />
 	<cfargument name="autoSizeColumns" type="boolean" default="true" />
 	
@@ -11,6 +12,7 @@
 
 	<cfset args.data   = arguments.data />
 	<cfset args.insert = arguments.insert />
+	<cfset args.datatype = arguments.datatype />
 	<cfset args.autoSizeColumns = arguments.autoSizeColumns />
 	
 	<cfif StructKeyExists(arguments, "row")>
